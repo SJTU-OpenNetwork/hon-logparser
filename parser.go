@@ -1,29 +1,9 @@
 package main
 
-
 import (
-	//"bufio"
-	"container/list"
 	"fmt"
-	//"gopkg.in/alecthomas/kingpin.v2"
-	//"io"
-	"time"
-
-	//"os"
 	"regexp"
 )
-
-type Recorder struct{
-	selfPeer string
-	eventList *list.List	// Store the events
-}
-
-type BitswapEvent struct{
-	Type string
-	Time time.Time
-	Info map[string]interface{}
-}
-
 
 /**
  * Formatted Tag:
@@ -33,10 +13,10 @@ type BitswapEvent struct{
  * [BLKCANCEL] Cid <cid>, From <peerid>
  * [WANTRECV] Cid <cid>, From <peerid>
  * [WANTSEND] Cid <cid>, SendTo <peerid>	;peerid could be ALL if it is broadcast
- * [TKTRECV] Cid <cid>, Publisher <peerid>, Receiver <peerid>
- * [TKTREJECT] Cid <cid>, Publisher <peerid>, Receiver <peerid>
- * [TKTACCEPT] Cid <cid>, Publisher <peerid>, Receiver <peerid>
- * [TKTSEND] Cid <cid>, SendTo <peerid>
+ * [TKTRECV] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
+ * [TKTREJECT] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
+ * [TKTACCEPT] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
+ * [TKTSEND] Cid <cid>, SendTo <peerid>, TimeStamp <time>
  * [ACKSEND] Cid <cid>, Publisher <peerid>, Receiver <peerid>	; The receiver of ack means receiver of the corresponding ticket.
  *																; In other words, it is the sender of ticket acks.
  *																; It is set in this way as receiver and publisher are used to index to specific ticket.
@@ -133,9 +113,11 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 				"From": params[1],
 			},
 		}, nil
-	case "BLKRECV":
+	case "BLKRECV", "BLKCANCEL", "WANTRECV":
+		// [BLKRECV] Cid <cid>, From <peerid>
+		// [BLKCANCEL] Cid <cid>, From <peerid>
+		// [WANTRECV] Cid <cid>, From <peerid>
 		return &BitswapEvent{
-			// [BLKRECV] Cid <cid>, From <peerid>
 			Type: info["event"],
 			Time: tmpTime,
 			Info: map[string]interface{}{
@@ -143,16 +125,66 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 				"From": params[2],
 			},
 		}, nil
-	case "BLKSEND":
-	case "BLKCANCEL":
-	case "WANTRECV":
-	case "WANTSEND":
-	case "TKTRECV":
-	case "TKTREJECT":
-	case "TKTACCEPT":
+	case "BLKSEND", "WANTSEND":
+		// [BLKSEND] Cid <cid>, SendTo <peerid>
+		// [WANTSEND] Cid <cid>, SendTo <peerid>
+		return &BitswapEvent{
+			Type: info["event"],
+			Time: tmpTime,
+			Info: map[string]interface{}{
+				"Cid": params[1],
+				"SendTo": params[2],
+			},
+		},nil
 	case "TKTSEND":
+		// [TKTSEND] Cid <cid>, SendTo <peerid>, TimeStamp <time>
+		return &BitswapEvent{
+			Type: info["event"],
+			Time: tmpTime,
+			Info: map[string]interface{}{
+				"Cid": params[1],
+				"SendTo": params[2],
+				"TimeStamp": params[3],
+			},
+		},nil
 	case "ACKSEND":
+		// [ACKSEND] Cid <cid>, Publisher <peerid>, Receiver <peerid>
+		return &BitswapEvent{
+			Type: info["event"],
+			Time: tmpTime,
+			Info: map[string]interface{}{
+				"Cid": params[1],
+				"Publisher": params[2],
+				"Receiver": params[3],
+			},
+		}, nil
+
+	case "TKTRECV", "TKTREJECT", "TKTACCEPT":
+		// [TKTRECV] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
+		// [TKTREJECT] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
+		// [TKTACCEPT] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
+		return &BitswapEvent{
+			Type: info["event"],
+			Time: tmpTime,
+			Info: map[string]interface{}{
+				"Cid": params[1],
+				"Publisher": params[2],
+				"Receiver": params[3],
+				"TimeStamp": params[4],
+			},
+		}, nil
 	case "ACKRECV":
+		// [ACKRECV] Cid <cid>, Publisher <peerid>, Receiver <peerid>, Type <ACCEPT|CANCEL>
+		return &BitswapEvent{
+			Type: info["event"],
+			Time: tmpTime,
+			Info: map[string]interface{}{
+				"Cid" : params[1],
+				"Publisher": params[2],
+				"Receiver" : params[3],
+				"Type" : params[4],
+			},
+		}, nil
 	}
 
 	return nil, nil
@@ -169,7 +201,7 @@ func testParse(info map[string]string){
 	if event == nil {
 		return
 	}
-	fmt.Println(*event)
+	//fmt.Println(*event)
 	/*
 	switch info["system"] {
 	case "tex-ipfs": fmt.Println(info["contains"])
