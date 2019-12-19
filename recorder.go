@@ -6,8 +6,9 @@ import (
 )
 
 type Recorder struct{
-	selfPeer string			// "" means it is a recorder merged from several sub-recorders.
-	eventList *list.List	// Store the events
+	selfPeer     string			// "" means it is a recorder merged from several sub-recorders.
+	eventList    *list.List	// Store the events
+	eventCounter Counter
 }
 
 type BitswapEvent struct{
@@ -22,5 +23,10 @@ func CreateRecorder() *Recorder{
 	return &Recorder{
 		selfPeer:  "",
 		eventList: list.New(),
+		eventCounter: nil,
 	}
+}
+
+func (r *Recorder) AddEvent(event *BitswapEvent){
+
 }

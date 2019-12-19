@@ -55,6 +55,7 @@ func (e *UnknownReg) Error() string{
 func Map2json(info map[string]interface{}) string {
 	jsonString, err := json.MarshalIndent(info, "", "\t")
 	if err != nil{
+		fmt.Println(err.Error())
 		return ""
 	}
 	return string(jsonString)
@@ -63,6 +64,7 @@ func Map2json(info map[string]interface{}) string {
 func Stringmap2json(info map[string]string) string{
 	jsonString, err := json.MarshalIndent(info, "", "\t")
 	if err != nil{
+		fmt.Println(err.Error())
 		return ""
 	}
 	return string(jsonString)
