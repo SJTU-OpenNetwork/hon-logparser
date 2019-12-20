@@ -14,6 +14,7 @@ type CSVAnalyzer struct{
 	names *peerName					//handle peer rename
 	eventList *list.List			//eventList that store only the filtered events
 	cidMap map[string] *list.List	//event indexed by cid
+	filter []string
 	//peerIndex map[string]int
 }
 
@@ -24,7 +25,21 @@ type peerName struct{
 	number int
 }
 
-func CreateCSVAnalyzer(outputDir string, recorder *Recorder) *CSVAnalyzer {
+func CreateCSVAnalyzer(outputDir string, recorder *Recorder, filter []string) *CSVAnalyzer {
+	// Initialize directory
+	ok, err := PathExists(outputDir)
+	if err != nil {
+		panic(err)
+	}
+
+	if !ok{
+		err = os.Mkdir(outputDir, os.ModePerm)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+
+
 	return &CSVAnalyzer{
 		outputDir: outputDir,
 		recorder:  recorder,
@@ -35,6 +50,7 @@ func CreateCSVAnalyzer(outputDir string, recorder *Recorder) *CSVAnalyzer {
 		},
 		eventList : list.New(),
 		cidMap : make(map[string] *list.List),
+		filter: filter,
 	}
 }
 
@@ -83,19 +99,7 @@ func reverseString(s string) string {
  *
  */
 func (a *CSVAnalyzer) AnalyzeBLK(){
-	// Initialize directory
-	ok, err := PathExists(a.outputDir)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
 
-	if !ok{
-		err = os.Mkdir(a.outputDir, os.ModePerm)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-	}
 
 	// Analyze block
 	for e := a.recorder.eventList.Front(); e != nil; e = e.Next(){
@@ -124,6 +128,18 @@ func (a *CSVAnalyzer) AnalyzeBLK(){
 	}
 }
 
+func (a *CSVAnalyzer) AnalyzeAll(){
+	for e := a.recorder.eventList.Front(); e != nil; e = e.Next() {
+		event :=  e.Value.(*BitswapEvent)
+		if Contains(a.filter, event.Type){
+			a.names.Add(event.GetPeer(event.Direction[0]))
+			a.names.Add(event.GetPeer(event.Direction[1]))
+			a.eventList.PushBack(event)
+		}
+	}
+	a.writeAllCSV()
+}
+
 /**
  * Get the header for this analyzer
  * (It may contains different peers.)
@@ -132,6 +148,15 @@ func (a *CSVAnalyzer) AnalyzeBLK(){
  */
 func (a *CSVAnalyzer) csvHeader()string{
 	res := "Time, Cid"
+	for i:=0; i<len(a.names.indexPeer); i++{
+		res = res + fmt.Sprintf(", %s", a.names.Get(a.names.indexPeer[i]))
+	}
+	res = res + "\n"
+	return res
+}
+
+func (a *CSVAnalyzer) csvHeaderAll() string {
+	res := "Time, Cid, Event"
 	for i:=0; i<len(a.names.indexPeer); i++{
 		res = res + fmt.Sprintf(", %s", a.names.Get(a.names.indexPeer[i]))
 	}
@@ -167,6 +192,123 @@ func (a *CSVAnalyzer) csvBLKLine(e *BitswapEvent) string{
 	publisherInd := a.names.peerIndex[publisher]
 	result = result + a.csvContain(a.names.number, publisherInd, a.names.Get(receiver))
 	return result
+}
+
+func (a *CSVAnalyzer) csvAllLine(e *BitswapEvent) string{
+	//fmt.Println("new line")
+	cid := e.Info["Cid"].(string)
+	result := fmt.Sprintf("%s, %s, %s", e.Time.String(), cid, e.Type)
+	publisher := e.GetPeer(e.Direction[0])
+	receiver := e.GetPeer(e.Direction[1])
+	publisherInd := a.names.peerIndex[publisher]
+	result = result + a.csvContain(a.names.number, publisherInd, a.names.Get(receiver))
+	return result
+}
+
+//func (a *CSVAnalyzer) csvAllLine(e *BitswapEvent) string{
+//	cid := e.Info["Cid"].(string)
+//	result := fmt.Sprintf("%s, %s, %s", e.Time.String(), cid, e.Type)
+//	var publisher string
+//	var receiver string
+//	switch e.Type{
+//	case "BLKRECV", "BLKCANCEL", "WANTRECV":
+//		// [BLKRECV] Cid <cid>, From <peerid>
+//		// [BLKCANCEL] Cid <cid>, From <peerid>
+//		// [WANTRECV] Cid <cid>, From <peerid>
+//		publisher = e.Info["From"].(string)
+//		receiver = e.Peer
+//
+//	case "BLKSEND", "WANTSEND":
+//		// [BLKSEND] Cid <cid>, SendTo <peerid>
+//		// [WANTSEND] Cid <cid>, SendTo <peerid>
+//		publisher = e.Peer
+//		receiver = e.Info["SendTo"].(string)
+//
+//	case "TKTSEND":
+//		// [TKTSEND] Cid <cid>, SendTo <peerid>, TimeStamp <time>
+//		publisher = e.Peer
+//		receiver = e.Info["SendTo"].(string)
+//
+//	case "ACKSEND":
+//		// [ACKSEND] Cid <cid>, Publisher <peerid>, Receiver <peerid>
+//		publisher = e.Info["Receiver"].(string)
+//		receiver = e.Info["Publisher"].(string)
+//		if publisher != e.Peer{
+//			panic(&UnMatchedSelfPeer{
+//				selfpeer: e.Peer,
+//				peer:     publisher,
+//			})
+//		}
+//
+//	case "TKTRECV":
+//		// [TKTRECV] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
+//		publisher = e.Info["Publisher"].(string)
+//		receiver = e.Info["Receiver"].(string)
+//
+//	case "TKTREJECT", "TKTACCEPT":
+//		// [TKTREJECT] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
+//		// [TKTACCEPT] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
+//		publisher = e.Info["Receiver"].(string)
+//		receiver = e.Info["Publisher"].(string)
+//		if publisher != e.Peer{
+//			panic(&UnMatchedSelfPeer{
+//				selfpeer: e.Peer,
+//				peer:     publisher,
+//			})
+//		}
+//
+//	case "ACKRECV":
+//		// [ACKRECV] Cid <cid>, Publisher <peerid>, Receiver <peerid>, Type <ACCEPT|CANCEL>
+//		publisher = e.Info["Receiver"].(string)
+//		receiver = e.Info["Publisher"].(string)
+//		if receiver != e.Peer{
+//			panic(&UnMatchedSelfPeer{
+//				selfpeer: e.Peer,
+//				peer:     publisher,
+//			})
+//		}
+//	default:
+//		panic(&WrongEventType{eventType:e.Type})
+//	}
+//	publisherInd := a.names.peerIndex[publisher]
+//	result = result + a.csvContain(a.names.number, publisherInd, a.names.Get(receiver))
+//	return result
+//}
+
+func (a *CSVAnalyzer) writeAllCSV(){
+	csvPath := path.Join(a.outputDir, "All.csv")
+	fo, err := os.Create(csvPath)
+	if err != nil {
+		panic(err)
+	}
+	defer func(){
+		if err := fo.Close(); err != nil {
+			panic(err)
+		}
+	}()
+
+	w:= bufio.NewWriter(fo)
+	header := a.csvHeaderAll()
+	if _, err := w.Write([]byte(header)); err != nil{
+		panic(err)
+	}
+
+	for e := a.eventList.Front(); e != nil; e = e.Next(){
+		event := e.Value.(*BitswapEvent)
+		if Contains(a.filter, event.Type) {
+			line := a.csvAllLine(event)
+			if _, err := w.Write([]byte(line)); err != nil {
+				panic(err)
+			}
+		}else{
+			//fmt.Println(event.Type)
+			panic("NO WAY")
+		}
+	}
+
+	if err = w.Flush(); err != nil {
+		panic(err)
+	}
 }
 
 func (a *CSVAnalyzer) writeBLKCSV(outDir string, cid string, l *list.List){

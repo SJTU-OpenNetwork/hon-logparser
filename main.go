@@ -2,8 +2,11 @@ package main
 
 import (
 	"bufio"
+	"path"
+
 	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
+	"io/ioutil"
 	"os"
 	"fmt"
 )
@@ -18,27 +21,10 @@ type tmp struct{
 	cc string
 }
 
-func main(){
-	if basicReg == nil || infoRegs == nil{
-		fmt.Println("Regulation initialization faild.")
-		return
-	}
-
-
-	kingpin.Parse()
-	if err != nil {
-		err.Error()
-		return
-	}
-
-	// default value of unset Flag (*output for eg.) is ""
-	// default value of string inside struct is ""
-
-	//Begin parse
-	f, err := os.Open(*input)
+func parseFile(filePath string) *Recorder{
+	f, err := os.Open(filePath)
 	if err != nil{
-		fmt.Println("Open input failed.")
-		return
+		panic(err)
 	}
 
 	defer f.Close()
@@ -59,9 +45,11 @@ func main(){
 			case *InvalidLogLine:
 				//Do nothing
 			case *ParseFailed, *UnknownReg:
-				fmt.Println(err.Error())
+				//fmt.Println(err.Error())
+				panic(err)
 			default:
-				fmt.Println(err.Error())
+				//fmt.Println(err.Error())
+				panic(err)
 			}
 		}
 	}
@@ -71,11 +59,53 @@ func main(){
 	if !ok {
 		fmt.Println("Set peer failed")
 	}
-	fmt.Println(recorder.selfPeer)
+	return recorder
+}
+
+func main(){
+	if basicReg == nil || infoRegs == nil{
+		fmt.Println("Regulation initialization faild.")
+		return
+	}
+
+
+	kingpin.Parse()
+	if err != nil {
+		err.Error()
+		return
+	}
+
+	// default value of unset Flag (*output for eg.) is ""
+	// default value of string inside struct is ""
+
+	//Begin parse
+	var recorder *Recorder
+	fordir, _ := os.Stat(*input)
+	if fordir.IsDir(){
+		recorders := make([]*Recorder, 0)
+		files, err := ioutil.ReadDir(*input)
+		if err != nil{
+			panic(err)
+		}
+
+		for _, f := range files{
+			//if path.Ext(f.Name())=="log" {
+				fmt.Println("parse "+f.Name())
+				recorders = append(recorders, parseFile(path.Join(*input, f.Name())))
+			//}else{
+			//	fmt.Println("not a log file " + f.Name())
+			//}
+		}
+		recorder = MergeRecorders(recorders)
+	} else {
+		recorder = parseFile(*input)
+	}
 
 	if *output != ""{
-		analyzer := CreateCSVAnalyzer(*output, recorder)
-		analyzer.AnalyzeBLK()
+		analyzer := CreateCSVAnalyzer(*output, recorder,
+			[]string{"BLKRECV", "BLKCANCEL", "WANTRECV", "BLKSEND",
+				"WANTSEND","TKTSEND","ACKSEND","TKTRECV","TKTREJECT", "TKTACCEPT","ACKRECV"})
+		analyzer.AnalyzeAll()
 	}
 
 	//test peer name

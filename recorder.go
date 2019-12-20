@@ -127,12 +127,13 @@ func MergeRecorders(rs []*Recorder) *Recorder{
 
 	//There should be at least one recorder in channel
 	for {
+		//fmt.Println(len(rch))
 		r1 := <-rch
-		r2, ok := <-rch
-		if !ok {
-			return r1
-		} else {
-			rch <- mergeTwoRecorders(r1, r2)
+		select {
+			case r2 := <-rch:
+				rch <- mergeTwoRecorders(r1, r2)
+			default:
+				return r1
 		}
 	}
 }

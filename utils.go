@@ -59,6 +59,14 @@ func (e *WrongEventType) Error() string{
 	return fmt.Sprintf("Get wrong event type %s.", e.eventType)
 }
 
+type UnMatchedSelfPeer struct{
+	selfpeer string
+	peer string
+}
+func (e *UnMatchedSelfPeer) Error() string {
+	return fmt.Sprintf("Unmatched self peer %s. %s", e.selfpeer, e.peer)
+}
+
 func Map2json(info map[string]interface{}) string {
 	jsonString, err := json.MarshalIndent(info, "", "\t")
 	if err != nil{
@@ -84,4 +92,13 @@ func parseTimestamp(str string) (time.Time, error){
 		return t, err
 	}
 	return t, nil
+}
+
+func Contains(sl []string, v string) bool {
+	for _, vv := range sl {
+		if vv == v {
+			return true
+		}
+	}
+	return false
 }
