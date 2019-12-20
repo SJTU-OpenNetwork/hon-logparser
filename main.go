@@ -8,9 +8,15 @@ import (
 	"fmt"
 )
 var (
-	input = kingpin.Flag("input", "Input log file").Short('i').String()
+	input = kingpin.Flag("input", "Input log file").Short('i').Required().String()
 	output = kingpin.Flag("output", "Output directory").Short('o').String()
 )
+
+type tmp struct{
+	aa string
+	bb int
+	cc string
+}
 
 func main(){
 	if basicReg == nil || infoRegs == nil{
@@ -20,31 +26,13 @@ func main(){
 
 
 	kingpin.Parse()
-	//defer (*input).Close() //打开文件出错处理
-	fmt.Printf("input file: %s, output to %s\n", *input, *output)
-
-	//Initialize regular expression
-	//String that begin with time stamp. Extract the timestamp.
-	//basicReg, err = regexp.Compile(`([\d -\.:]{26}) ([A-Z]*) ([a-z-_\.]*) ([a-z-_:\.0-9]*) (.*)`)
 	if err != nil {
 		err.Error()
 		return
 	}
 
-
-	//Create output directory
-	exist, err := PathExists(*output)
-	if err != nil{
-		err.Error()
-		return
-	}
-	if !exist {
-		err = os.Mkdir(*output, os.ModePerm)
-		if err != nil{
-			err.Error()
-			return
-		}
-	}
+	// default value of unset Flag (*output for eg.) is ""
+	// default value of string inside struct is ""
 
 	//Begin parse
 	f, err := os.Open(*input)
@@ -54,18 +42,31 @@ func main(){
 	}
 	defer f.Close()
 	reader := bufio.NewReader(f)
+	recorder := CreateRecorder()
+	recorder.AddMapCounter()
 	for {
 		line, _, err := reader.ReadLine()
 		if err == io.EOF {
 			fmt.Println("log end")
 			break
 		}
-		//fmt.Println(line)
-		//fmt.Println("!!!!!!!!")
-		info, err := extractBasic(string(line))
-		if err == nil{
-			testParse(info)
+		event, err := ParseLine(string(line))
+		if err == nil {
+			recorder.AddEvent(event)
+		}else{
+			switch err.(type){
+			case *InvalidLogLine:
+				//Do nothing
+			case *ParseFailed, *UnknownReg:
+				fmt.Println(err.Error())
+			default:
+				fmt.Println(err.Error())
+			}
 		}
 	}
-	//extractBasic("2019-12-18 01:25:45.289748 INFO tex-service service.go:482: pubsub service listener started for /textile/threads/2.0.0/Thread/12D3KooWSBLLrCiAidDzPwcZs2ak1u7ZXhC3geU8RAg61eRzAWm7")
+	recorder.PrintCounter()
+	recorder.CheckSelf()
+	recorder.SetEventsPeer()
+	fmt.Println(recorder.selfPeer)
+
 }

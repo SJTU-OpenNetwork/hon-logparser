@@ -31,10 +31,15 @@ var (
 		"BLKCANCEL":`Cid ([\w]*), From ([\w]*).*`,
 		"WANTRECV" : `Cid ([\w]*), From ([\w]*).*`,
 		"WANTSEND" : `Cid ([\w]*), SendTo ([\w]*).*`,
-		"TKTRECV"  : `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*), TimeStamp ([0-9]*).*`,
-		"TKTREJECT": `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*), TimeStamp ([0-9]*).*`,
-		"TKTACCEPT": `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*), TimeStamp ([0-9]*).*`,
-		"TKTSEND"  : `Cid ([\w]*), SendTo ([\w]*), TimeStamp ([0-9]*).*`,
+		//"TKTRECV"  : `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*), TimeStamp ([0-9]*).*`,
+		//"TKTREJECT": `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*), TimeStamp ([0-9]*).*`,
+		//"TKTACCEPT": `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*), TimeStamp ([0-9]*).*`,
+		//"TKTSEND"  : `Cid ([\w]*), SendTo ([\w]*), TimeStamp ([0-9]*).*`,
+		"TKTRECV"  : `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*).*`,
+		"TKTREJECT": `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*).*`,
+		"TKTACCEPT": `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*).*`,
+		"TKTSEND"  : `Cid ([\w]*), SendTo ([\w]*).*`,
+
 		"ACKSEND"  : `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*).*`,
 		"ACKRECV"  : `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*), Type ([A-Z]*).*`,
 	}
@@ -44,6 +49,7 @@ var (
 	err       error
 )
 const timeFotmat = "2006-01-02 15:04:05.000000"
+const SELF = "SELF"
 
 func init(){
 	fmt.Println("Initialize regulation expressions.")
@@ -109,6 +115,9 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 		return &BitswapEvent{
 			Type: info["event"],
 			Time: tmpTime,
+			Direction: []string{
+				params[1], SELF,
+			},
 			Info: map[string]interface{}{
 				"From": params[1],
 			},
@@ -120,6 +129,9 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 		return &BitswapEvent{
 			Type: info["event"],
 			Time: tmpTime,
+			Direction:[]string{
+				params[2], SELF,
+			},
 			Info: map[string]interface{}{
 				"Cid": params[1],
 				"From": params[2],
@@ -131,6 +143,9 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 		return &BitswapEvent{
 			Type: info["event"],
 			Time: tmpTime,
+			Direction: []string{
+				SELF, params[2],
+			},
 			Info: map[string]interface{}{
 				"Cid": params[1],
 				"SendTo": params[2],
@@ -141,10 +156,13 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 		return &BitswapEvent{
 			Type: info["event"],
 			Time: tmpTime,
+			Direction: []string{
+				SELF, params[2],
+			},
 			Info: map[string]interface{}{
 				"Cid": params[1],
 				"SendTo": params[2],
-				"TimeStamp": params[3],
+				//"TimeStamp": params[3],
 			},
 		},nil
 	case "ACKSEND":
@@ -152,25 +170,44 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 		return &BitswapEvent{
 			Type: info["event"],
 			Time: tmpTime,
+			Direction: []string{
+				SELF, params[2],
+			},
 			Info: map[string]interface{}{
 				"Cid": params[1],
 				"Publisher": params[2],
 				"Receiver": params[3],
 			},
 		}, nil
-
-	case "TKTRECV", "TKTREJECT", "TKTACCEPT":
+	case "TKTRECV":
 		// [TKTRECV] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
+		return &BitswapEvent{
+			Type: info["event"],
+			Time: tmpTime,
+			Direction: []string{
+				params[2], SELF,
+			},
+			Info: map[string]interface{}{
+				"Cid": params[1],
+				"Publisher": params[2],
+				"Receiver": params[3],
+				//"TimeStamp": params[4],
+			},
+		}, nil
+	case "TKTREJECT", "TKTACCEPT":
 		// [TKTREJECT] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
 		// [TKTACCEPT] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
 		return &BitswapEvent{
 			Type: info["event"],
 			Time: tmpTime,
+			Direction: []string{
+				SELF, params[2],
+			},
 			Info: map[string]interface{}{
 				"Cid": params[1],
 				"Publisher": params[2],
 				"Receiver": params[3],
-				"TimeStamp": params[4],
+				//"TimeStamp": params[4],
 			},
 		}, nil
 	case "ACKRECV":
@@ -178,6 +215,9 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 		return &BitswapEvent{
 			Type: info["event"],
 			Time: tmpTime,
+			Direction: []string{
+				params[3], SELF,
+			},
 			Info: map[string]interface{}{
 				"Cid" : params[1],
 				"Publisher": params[2],
@@ -209,7 +249,17 @@ func testParse(info map[string]string){
 	 */
 }
 
-func parseLine(line string){
+func ParseLine(line string) (*BitswapEvent, error) {
+	info, err := extractBasic(line)
+	if err != nil{
+		return nil, err
+	}
 
+	event, err := parseInfo(info)
+	if err != nil{
+		return nil, err
+	}
+
+	return event, nil
 }
 
