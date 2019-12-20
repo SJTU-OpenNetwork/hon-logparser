@@ -1,3 +1,7 @@
+## Install
+```bash
+make
+```
 ## Usage
 
 ```bash
