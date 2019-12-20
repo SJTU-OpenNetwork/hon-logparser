@@ -22,6 +22,14 @@ type BitswapEvent struct{
 	Info map[string]interface{}
 }
 
+func (e *BitswapEvent)GetPeer(peer string) string{
+	if peer == SELF && e.Peer!=""{
+		return e.Peer
+	} else {
+		return peer
+	}
+}
+
 /**
  * When we create
  */
@@ -96,14 +104,15 @@ func (r *Recorder) CheckSelf(){
 	}
 }
 
-func (r *Recorder) SetEventsPeer(){
+func (r *Recorder) SetEventsPeer() bool {
 	if r.selfPeer == ""{
 		fmt.Println("Recorder contains no self peer info!!")
-		return
+		return false
 	}else {
 		for e := r.eventList.Front(); e != nil; e = e.Next() {
 			e.Value.(*BitswapEvent).Peer = r.selfPeer
 		}
+		return true
 	}
 }
 

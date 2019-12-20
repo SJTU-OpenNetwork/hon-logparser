@@ -52,6 +52,13 @@ func (e *UnknownReg) Error() string{
 	return fmt.Sprintf("Unknown regular expression %s.", e.reg)
 }
 
+type WrongEventType struct{
+	eventType string
+}
+func (e *WrongEventType) Error() string{
+	return fmt.Sprintf("Get wrong event type %s.", e.eventType)
+}
+
 func Map2json(info map[string]interface{}) string {
 	jsonString, err := json.MarshalIndent(info, "", "\t")
 	if err != nil{

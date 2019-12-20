@@ -40,6 +40,7 @@ func main(){
 		fmt.Println("Open input failed.")
 		return
 	}
+
 	defer f.Close()
 	reader := bufio.NewReader(f)
 	recorder := CreateRecorder()
@@ -66,7 +67,24 @@ func main(){
 	}
 	recorder.PrintCounter()
 	recorder.CheckSelf()
-	recorder.SetEventsPeer()
+	ok := recorder.SetEventsPeer()
+	if !ok {
+		fmt.Println("Set peer failed")
+	}
 	fmt.Println(recorder.selfPeer)
 
+	if *output != ""{
+		analyzer := CreateCSVAnalyzer(*output, recorder)
+		analyzer.AnalyzeBLK()
+	}
+
+	//test peer name
+	//peername := &peerName{
+	//	names:  make(map[string]string),
+	//}
+	//for i:=0; i<300; i++{
+	//	peername.Add(string(i))
+	//	peername.Add(string(i))
+	//}
+	//fmt.Println(Stringmap2json(peername.names))
 }
