@@ -11,8 +11,11 @@ import (
 	"fmt"
 )
 var (
-	input = kingpin.Flag("input", "Input log file").Short('i').Required().String()
-	output = kingpin.Flag("output", "Output directory").Short('o').String()
+	app	  = kingpin.New("hon-logparser", "A command-line tool used to parse log of HON project.")
+	input = app.Flag("input", "Input log file").Short('i').Required().String()
+	output = app.Flag("output", "Output directory").Short('o').Required().String()
+
+	parseCmd = app.Command("parse", "Parse the log infos")
 )
 
 type tmp struct{
@@ -43,10 +46,19 @@ func parseFile(filePath string) *Recorder{
 		}else{
 			switch err.(type){
 			case *InvalidLogLine:
-				//Do nothing
-			case *ParseFailed, *UnknownReg:
-				//fmt.Println(err.Error())
+				// Happends when it is not a passerable line.
+				// The format of passerable line:
+				// - 20xx-xx-xx xx:xx:xx.xxx DEBUG tex-core xxx.go:111: [MSGRECV] xxxx
+				// - ([\d -\.:]{26}) ([A-Z]*) ([a-z-_\.]*) ([a-z-_:\.0-9A-Z]*) \[([A-Z]*)\] (.*)
+			case *ParseFailed:
+				// Happends when the event info cannot be pasered
+				// It always implies wrong regulation expression so we panic it directly.
 				panic(err)
+			case *UnknownReg:
+				// Happends when there occurrs some unknown event type.
+				// Such as [XXXSEND]
+				fmt.Println(err.Error())
+
 			default:
 				//fmt.Println(err.Error())
 				panic(err)
@@ -68,45 +80,51 @@ func main(){
 		return
 	}
 
+	//kingpin.Parse()
+	//if err != nil {
+	//	err.Error()
+	//	return
+	//}
 
-	kingpin.Parse()
-	if err != nil {
-		err.Error()
-		return
+
+
+
+
+	switch kingpin.MustParse(app.Parse(os.Args[1:])){
+	case parseCmd.FullCommand():
+		fmt.Println("Do Parse.")
+		var recorder *Recorder
+		fordir, _ := os.Stat(*input)
+		if fordir.IsDir(){
+			recorders := make([]*Recorder, 0)
+			files, err := ioutil.ReadDir(*input)
+			if err != nil{
+				panic(err)
+			}
+
+			for _, f := range files{
+				//if path.Ext(f.Name())=="log" {
+				fmt.Println("parse "+f.Name())
+				recorders = append(recorders, parseFile(path.Join(*input, f.Name())))
+				//}else{
+				//	fmt.Println("not a log file " + f.Name())
+				//}
+			}
+			recorder = MergeRecorders(recorders)
+		} else {
+			recorder = parseFile(*input)
+		}
+		analyzer := CreateCSVAnalyzer(*output, recorder,
+			[]string{"BLKRECV", "BLKCANCEL", "WANTRECV", "BLKSEND",
+				"WANTSEND","TKTSEND","ACKSEND","TKTRECV","TKTREJECT", "TKTACCEPT","ACKRECV"})
+		analyzer.AnalyzeAll()
 	}
 
 	// default value of unset Flag (*output for eg.) is ""
 	// default value of string inside struct is ""
 
 	//Begin parse
-	var recorder *Recorder
-	fordir, _ := os.Stat(*input)
-	if fordir.IsDir(){
-		recorders := make([]*Recorder, 0)
-		files, err := ioutil.ReadDir(*input)
-		if err != nil{
-			panic(err)
-		}
 
-		for _, f := range files{
-			//if path.Ext(f.Name())=="log" {
-				fmt.Println("parse "+f.Name())
-				recorders = append(recorders, parseFile(path.Join(*input, f.Name())))
-			//}else{
-			//	fmt.Println("not a log file " + f.Name())
-			//}
-		}
-		recorder = MergeRecorders(recorders)
-	} else {
-		recorder = parseFile(*input)
-	}
-
-	if *output != ""{
-		analyzer := CreateCSVAnalyzer(*output, recorder,
-			[]string{"BLKRECV", "BLKCANCEL", "WANTRECV", "BLKSEND",
-				"WANTSEND","TKTSEND","ACKSEND","TKTRECV","TKTREJECT", "TKTACCEPT","ACKRECV"})
-		analyzer.AnalyzeAll()
-	}
 
 	//test peer name
 	//peername := &peerName{
