@@ -331,8 +331,6 @@ func (a *CSVAnalyzer) writeNamePeer(){
 		line := fmt.Sprintf("%s - %s\n", name, peerid)
 		if _, err := w.Write([]byte(line)); err != nil {
 			panic(err)
-		}else{
-			panic("NO WAY")
 		}
 	}
 	if err = w.Flush(); err != nil{
