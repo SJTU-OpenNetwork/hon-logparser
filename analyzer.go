@@ -372,7 +372,18 @@ func (a *CSVAnalyzer) writeBLKCSV(outDir string, cid string, l *list.List){
 //=======================================
 
 func (a *CSVAnalyzer) AnalyzerRECVTree(){
-	// Add sub
+	// Build directory
+	outDir :=  path.Join(a.outputDir, "trees")
+	ok, err := PathExists(outDir)
+	if err != nil {
+		panic(err)
+	}
+	if !ok{
+		err = os.Mkdir(outDir, os.ModePerm)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
 
 	// Analyze block
 	for e := a.recorder.eventList.Front(); e != nil; e = e.Next(){
@@ -396,7 +407,7 @@ func (a *CSVAnalyzer) AnalyzerRECVTree(){
 
 	// Write to file
 	for cid, l := range a.cidMap{
-		a.writeRECVTree(a.outputDir, cid, l)
+		a.writeRECVTree(outDir, cid, l)
 	}
 }
 
@@ -450,6 +461,7 @@ func (a *CSVAnalyzer) buildRecvTree(cid string, l *list.List) *recvTree{
 			rNode, ok := result.nameNode[receiver]
 			if !ok {
 				rNode = newTreeNode(receiver)
+				result.nameNode[receiver] = rNode
 				//rNode.duplicateRecv = 1
 			}
 			if rNode.duplicateRecv > 0{
@@ -463,6 +475,7 @@ func (a *CSVAnalyzer) buildRecvTree(cid string, l *list.List) *recvTree{
 			pNode, ok := result.nameNode[publisher]
 			if !ok{
 				pNode = newTreeNode(publisher)
+				result.nameNode[publisher] = pNode
 			}
 
 			pNode.addSuccessor(rNode)
@@ -478,11 +491,27 @@ func (a *CSVAnalyzer) buildRecvTree(cid string, l *list.List) *recvTree{
 	return result
 }
 
-func dfsRECVTree(node *recvTreeNode) int {
+func dfsRECVTree(node *recvTreeNode, level int, writer *bufio.Writer) int {
 	var result = 0
 	//result = 0
-	for _, n := range node.successors{
-		result = result + dfsRECVTree(n)
+	writer.Write([]byte(fmt.Sprintf("%3s", node.peerName)))
+
+	if len(node.successors) == 0{
+		writer.Write([]byte("\n"))
+		return 1
+	}
+
+	for i, n := range node.successors{
+		if i==0 {
+			writer.Write([]byte("--"))
+			result = result + dfsRECVTree(n, level+1, writer)
+		}else{
+			for k:=0; k < level; k++{
+				writer.Write([]byte("    |"))
+			}
+			writer.Write([]byte("-"))
+			result = result + dfsRECVTree(n, level+1, writer)
+		}
 	}
 	return result + 1
 }
@@ -490,6 +519,24 @@ func dfsRECVTree(node *recvTreeNode) int {
 func (a *CSVAnalyzer) writeRECVTree(outDir string, cid string, l *list.List){
 	tree := a.buildRecvTree(cid, l)
 	//var counter int
-	counted := dfsRECVTree(tree.root)
+
+	txtPath := path.Join(outDir, fmt.Sprintf("%s.txt", cid))
+	fo, err := os.Create(txtPath)
+	if err != nil {
+		panic(err)
+	}
+
+	defer func(){
+		if err := fo.Close(); err != nil {
+			panic(err)
+		}
+	}()
+
+	w:= bufio.NewWriter(fo)
+
+	counted := dfsRECVTree(tree.root, 0, w)
 	fmt.Println(fmt.Sprintf("Counted nodes %d, Total nodes %d", counted, len(tree.nameNode)))
+	if err = w.Flush(); err != nil {
+		panic(err)
+	}
 }

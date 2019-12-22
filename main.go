@@ -56,7 +56,7 @@ func parseFile(filePath string) *Recorder{
 			case *UnknownReg:
 				// Happends when there occurrs some unknown event type.
 				// Such as [XXXSEND]
-				fmt.Println(err.Error())
+				//fmt.Println(err.Error())
 
 			default:
 				//fmt.Println(err.Error())
@@ -109,7 +109,7 @@ func main(){
 			[]string{"BLKRECV", "BLKCANCEL", "WANTRECV", "BLKSEND",
 				"WANTSEND","TKTSEND","ACKSEND","TKTRECV","TKTREJECT", "TKTACCEPT","ACKRECV"})
 		analyzer.AnalyzeAll()
-		//analyzer.AnalyzerRECVTree()
+		analyzer.AnalyzerRECVTree()
 	}
 
 	// default value of unset Flag (*output for eg.) is ""
