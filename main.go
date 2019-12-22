@@ -2,13 +2,12 @@ package main
 
 import (
 	"bufio"
-	"path"
-
+	"fmt"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
 	"io/ioutil"
 	"os"
-	"fmt"
+	"path"
 )
 var (
 	app	  = kingpin.New("hon-logparser", "A command-line tool used to parse log of HON project.")
@@ -80,59 +79,40 @@ func main(){
 		return
 	}
 
-	//kingpin.Parse()
-	//if err != nil {
-	//	err.Error()
-	//	return
-	//}
+	cmd := kingpin.MustParse(app.Parse(os.Args[1:]))
+	fordir, _ := os.Stat(*input)
+	var recorder *Recorder
+	if fordir.IsDir(){
+		recorders := make([]*Recorder, 0)
+		files, err := ioutil.ReadDir(*input)
+		if err != nil{
+			panic(err)
+		}
 
-
-
-
-
-	switch kingpin.MustParse(app.Parse(os.Args[1:])){
+		for _, f := range files{
+			//if path.Ext(f.Name())=="log" {
+			fmt.Println("parse "+f.Name())
+			recorders = append(recorders, parseFile(path.Join(*input, f.Name())))
+			//}else{
+			//	fmt.Println("not a log file " + f.Name())
+			//}
+		}
+		recorder = MergeRecorders(recorders)
+	} else {
+		recorder = parseFile(*input)
+	}
+	//switch kingpin.MustParse(app.Parse(os.Args[1:])){
+	switch cmd{
 	case parseCmd.FullCommand():
 		fmt.Println("Do Parse.")
-		var recorder *Recorder
-		fordir, _ := os.Stat(*input)
-		if fordir.IsDir(){
-			recorders := make([]*Recorder, 0)
-			files, err := ioutil.ReadDir(*input)
-			if err != nil{
-				panic(err)
-			}
-
-			for _, f := range files{
-				//if path.Ext(f.Name())=="log" {
-				fmt.Println("parse "+f.Name())
-				recorders = append(recorders, parseFile(path.Join(*input, f.Name())))
-				//}else{
-				//	fmt.Println("not a log file " + f.Name())
-				//}
-			}
-			recorder = MergeRecorders(recorders)
-		} else {
-			recorder = parseFile(*input)
-		}
 		analyzer := CreateCSVAnalyzer(*output, recorder,
 			[]string{"BLKRECV", "BLKCANCEL", "WANTRECV", "BLKSEND",
 				"WANTSEND","TKTSEND","ACKSEND","TKTRECV","TKTREJECT", "TKTACCEPT","ACKRECV"})
 		analyzer.AnalyzeAll()
+		//analyzer.AnalyzerRECVTree()
 	}
 
 	// default value of unset Flag (*output for eg.) is ""
 	// default value of string inside struct is ""
 
-	//Begin parse
-
-
-	//test peer name
-	//peername := &peerName{
-	//	names:  make(map[string]string),
-	//}
-	//for i:=0; i<300; i++{
-	//	peername.Add(string(i))
-	//	peername.Add(string(i))
-	//}
-	//fmt.Println(Stringmap2json(peername.names))
 }

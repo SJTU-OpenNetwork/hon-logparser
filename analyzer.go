@@ -138,6 +138,7 @@ func (a *CSVAnalyzer) AnalyzeAll(){
 		}
 	}
 	a.writeAllCSV()
+	a.writeNamePeer()
 }
 
 /**
@@ -311,6 +312,34 @@ func (a *CSVAnalyzer) writeAllCSV(){
 	}
 }
 
+func (a *CSVAnalyzer) writeNamePeer(){
+	txtPath := path.Join(a.outputDir, "name_peer.txt")
+	fo, err := os.Create(txtPath)
+	if err != nil {
+		panic(err)
+	}
+
+	defer func() {
+		if err := fo.Close(); err != nil{
+			panic(err)
+		}
+	}()
+
+	w := bufio.NewWriter(fo)
+
+	for name, peerid := range a.names.names{
+		line := fmt.Sprintf("%s - %s\n", name, peerid)
+		if _, err := w.Write([]byte(line)); err != nil {
+			panic(err)
+		}else{
+			panic("NO WAY")
+		}
+	}
+	if err = w.Flush(); err != nil{
+		panic(err)
+	}
+}
+
 func (a *CSVAnalyzer) writeBLKCSV(outDir string, cid string, l *list.List){
 	csvPath := path.Join(outDir, "BLKRECV.csv")
 	fo, err := os.Create(csvPath)
@@ -340,4 +369,129 @@ func (a *CSVAnalyzer) writeBLKCSV(outDir string, cid string, l *list.List){
 	if err = w.Flush(); err != nil {
 		panic(err)
 	}
+}
+
+//=======================================
+
+func (a *CSVAnalyzer) AnalyzerRECVTree(){
+	// Add sub
+
+	// Analyze block
+	for e := a.recorder.eventList.Front(); e != nil; e = e.Next(){
+		switch e.Value.(*BitswapEvent).Type{
+		case "BLKRECV":
+			// [BLKRECV] Cid <cid>, From <peerid>
+			event := e.Value.(*BitswapEvent)
+			//fmt.Println(Map2json(event.Info))
+			cid := event.Info["Cid"].(string)
+			l, ok := a.cidMap[cid]
+			if !ok {
+				l = list.New()
+				a.cidMap[cid] = l
+			}
+			a.names.Add(event.GetPeer(event.Direction[0]))
+			a.names.Add(event.GetPeer(event.Direction[1]))
+			a.eventList.PushBack(event)
+			l.PushBack(event)
+		}
+	}
+
+	// Write to file
+	for cid, l := range a.cidMap{
+		a.writeRECVTree(a.outputDir, cid, l)
+	}
+}
+
+//func (a *CSVAnalyzer) buildTree
+type recvTreeNode struct{
+	successors []*recvTreeNode
+	precursor *recvTreeNode
+	peerName string
+	//duplicateSend int
+	duplicateRecv int
+}
+
+type recvTree struct {
+	cid             string
+	root            *recvTreeNode
+	//duplicatedSends int
+	duplicateRecv int
+	nameNode        map[string]*recvTreeNode
+}
+
+func newTreeNode(name string) *recvTreeNode{
+	return &recvTreeNode{
+		successors:    make([]*recvTreeNode,0),
+		precursor:     nil,
+		peerName:      name,
+		duplicateRecv: 0,
+	}
+}
+
+func (n *recvTreeNode) addSuccessor(s *recvTreeNode){
+	n.successors = append(n.successors, s)
+}
+
+func (a *CSVAnalyzer) buildRecvTree(cid string, l *list.List) *recvTree{
+	result := &recvTree{
+		cid:             cid,
+		root:            nil,
+		//duplicatedSends: 0,
+		duplicateRecv: 0,
+		nameNode:		make(map[string]*recvTreeNode),
+	}
+
+	for e := l.Front(); e != nil; e = e.Next(){
+		event := e.Value.(*BitswapEvent)
+		switch event.Type{
+		case "BLKRECV":
+			publisher := a.names.names[event.GetPeer(event.Direction[0])]
+			receiver := a.names.names[event.GetPeer(event.Direction[1])]
+
+			// Get receive node
+			rNode, ok := result.nameNode[receiver]
+			if !ok {
+				rNode = newTreeNode(receiver)
+				//rNode.duplicateRecv = 1
+			}
+			if rNode.duplicateRecv > 0{
+				rNode.duplicateRecv += 1
+				fmt.Println(fmt.Sprintf("Duplicate block receive %s : %s -> %s", cid, publisher, receiver))
+				break
+			}
+			rNode.duplicateRecv = 1
+
+			// Get publish node
+			pNode, ok := result.nameNode[publisher]
+			if !ok{
+				pNode = newTreeNode(publisher)
+			}
+
+			pNode.addSuccessor(rNode)
+			rNode.precursor = pNode
+
+			// Reset root node
+			if result.root == nil || result.root == rNode {
+				result.root = pNode
+			}
+		}
+	}
+
+	return result
+}
+
+func dfsRECVTree(node *recvTreeNode) int {
+	var result = 0
+	//result = 0
+	for _, n := range node.successors{
+		result = result + dfsRECVTree(n)
+	}
+	return result + 1
+}
+
+func (a *CSVAnalyzer) writeRECVTree(outDir string, cid string, l *list.List){
+	tree := a.buildRecvTree(cid, l)
+	//var counter int
+	counted := dfsRECVTree(tree.root)
+	fmt.Println(fmt.Sprintf("Counted nodes %d, Total nodes %d", counted, len(tree.nameNode)))
 }
