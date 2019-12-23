@@ -426,6 +426,7 @@ type recvTree struct {
 	//duplicatedSends int
 	duplicateRecv int
 	nameNode        map[string]*recvTreeNode
+	//nodeList 	*list.List
 }
 
 func newTreeNode(name string) *recvTreeNode{
@@ -502,18 +503,78 @@ func dfsRECVTree(node *recvTreeNode, level int, writer *bufio.Writer) int {
 	}
 
 	for i, n := range node.successors{
+
 		if i==0 {
 			writer.Write([]byte("--"))
 			result = result + dfsRECVTree(n, level+1, writer)
+
 		}else{
-			for k:=0; k < level; k++{
-				writer.Write([]byte("    |"))
+
+			for k:=0; k <= level; k++{
+				if k==0 {
+					writer.Write([]byte("   |"))
+				}else {
+					writer.Write([]byte("    |"))
+				}
 			}
 			writer.Write([]byte("-"))
 			result = result + dfsRECVTree(n, level+1, writer)
 		}
 	}
 	return result + 1
+}
+
+func dfsRECVTreePrefix(tree *recvTree, node *recvTreeNode, prefix string, isLast bool, isFirst bool, writer *bufio.Writer) int {
+	var result = 0
+	delete(tree.nameNode, node.peerName)
+	if isFirst {
+		writer.Write([]byte(fmt.Sprintf("--%3s", node.peerName)))
+	}else {
+		writer.Write([]byte(fmt.Sprintf("%s|-%3s", prefix, node.peerName)))
+	}
+	if len(node.successors) == 0{
+		writer.Write([]byte("\n"))
+		return 1
+	}
+	var nextPrefix string
+	if isLast {
+		nextPrefix = prefix + "     "
+		//fmt.Println(nextPrefix)
+	}else{
+		nextPrefix = prefix + "|    "
+	}
+	for i, n := range node.successors{
+		nextIsLast := (i == len(node.successors)-1)
+		nextIsFirst := i == 0
+		//writer.Write([]byte(prefix))
+		if i==0 {
+			//writer.Write([]byte("--"))
+			result = result + dfsRECVTreePrefix(tree, n, nextPrefix, nextIsLast, nextIsFirst, writer)
+
+		}else{
+
+			//writer.Write([]byte("|-"))
+			result = result + dfsRECVTreePrefix(tree, n, nextPrefix, nextIsLast, nextIsFirst, writer)
+		}
+	}
+	return result + 1
+}
+
+func getRoot(node *recvTreeNode) *recvTreeNode{
+	for node.precursor != nil {
+		node = node.precursor
+	}
+	return node
+}
+
+func getAnyNode(nameNode map[string] *recvTreeNode) *recvTreeNode{
+	if len(nameNode) == 0{
+		return nil
+	}
+	for _, node := range nameNode{
+		return node
+	}
+	return nil
 }
 
 func (a *CSVAnalyzer) writeRECVTree(outDir string, cid string, l *list.List){
@@ -534,8 +595,15 @@ func (a *CSVAnalyzer) writeRECVTree(outDir string, cid string, l *list.List){
 
 	w:= bufio.NewWriter(fo)
 
-	counted := dfsRECVTree(tree.root, 0, w)
-	fmt.Println(fmt.Sprintf("Counted nodes %d, Total nodes %d", counted, len(tree.nameNode)))
+	//counted := dfsRECVTree(tree.root, 0, w)
+	var counted int
+	total := len(tree.nameNode)
+	for len(tree.nameNode) > 0 {
+		node := getAnyNode(tree.nameNode)
+		node = getRoot(node)
+		counted = counted + dfsRECVTreePrefix(tree, node, "", true, true, w)
+	}
+	fmt.Println(fmt.Sprintf("Counted nodes %d, Total nodes %d", counted, total))
 	if err = w.Flush(); err != nil {
 		panic(err)
 	}
