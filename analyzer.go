@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 )
 
 type CSVAnalyzer struct{
@@ -13,7 +14,7 @@ type CSVAnalyzer struct{
 	recorder *Recorder
 	names *peerName					//handle peer rename
 	eventList *list.List			//eventList that store only the filtered events
-	cidMap map[string] *list.List	//event indexed by cid
+	//cidMap map[string] *list.List	//event indexed by cid
 	filter []string
 	//peerIndex map[string]int
 }
@@ -49,7 +50,7 @@ func CreateCSVAnalyzer(outputDir string, recorder *Recorder, filter []string) *C
 			indexPeer : make(map[int]string),
 		},
 		eventList : list.New(),
-		cidMap : make(map[string] *list.List),
+		// cidMap : make(map[string] *list.List),
 		filter: filter,
 	}
 }
@@ -95,38 +96,7 @@ func reverseString(s string) string {
 }
 
 
-/**
- *
- */
-func (a *CSVAnalyzer) AnalyzeBLK(){
 
-
-	// Analyze block
-	for e := a.recorder.eventList.Front(); e != nil; e = e.Next(){
-		switch e.Value.(*BitswapEvent).Type{
-		case "BLKRECV":
-			// [BLKRECV] Cid <cid>, From <peerid>
-			event := e.Value.(*BitswapEvent)
-			//fmt.Println(Map2json(event.Info))
-			cid := event.Info["Cid"].(string)
-			l, ok := a.cidMap[cid]
-			if !ok {
-				l = list.New()
-				a.cidMap[cid] = l
-				a.names.Add(event.Peer)
-				a.names.Add(event.Info["From"].(string))
-				//a.cidList = append(a.cidList, cid)
-			}
-			l.PushBack(event)
-			a.eventList.PushBack(event)
-		}
-	}
-
-	// Write to file
-	for cid, l := range a.cidMap{
-		a.writeBLKCSV(a.outputDir, cid, l)
-	}
-}
 
 func (a *CSVAnalyzer) AnalyzeAll(){
 	for e := a.recorder.eventList.Front(); e != nil; e = e.Next() {
@@ -370,6 +340,8 @@ func (a *CSVAnalyzer) writeBLKCSV(outDir string, cid string, l *list.List){
 }
 
 //=======================================
+//Analyze BLKRECV
+//=======================================
 
 func (a *CSVAnalyzer) AnalyzerRECVTree(){
 	// Build directory
@@ -386,6 +358,8 @@ func (a *CSVAnalyzer) AnalyzerRECVTree(){
 	}
 
 	// Analyze block
+	cidMap := make(map[string] *list.List)
+
 	for e := a.recorder.eventList.Front(); e != nil; e = e.Next(){
 		switch e.Value.(*BitswapEvent).Type{
 		case "BLKRECV":
@@ -393,20 +367,20 @@ func (a *CSVAnalyzer) AnalyzerRECVTree(){
 			event := e.Value.(*BitswapEvent)
 			//fmt.Println(Map2json(event.Info))
 			cid := event.Info["Cid"].(string)
-			l, ok := a.cidMap[cid]
+			l, ok := cidMap[cid]
 			if !ok {
 				l = list.New()
-				a.cidMap[cid] = l
+				cidMap[cid] = l
 			}
 			a.names.Add(event.GetPeer(event.Direction[0]))
 			a.names.Add(event.GetPeer(event.Direction[1]))
-			a.eventList.PushBack(event)
+			//a.eventList.PushBack(event)
 			l.PushBack(event)
 		}
 	}
 
 	// Write to file
-	for cid, l := range a.cidMap{
+	for cid, l := range cidMap{
 		a.writeRECVTree(outDir, cid, l)
 	}
 }
@@ -418,6 +392,7 @@ type recvTreeNode struct{
 	peerName string
 	//duplicateSend int
 	duplicateRecv int
+	time time.Time
 }
 
 type recvTree struct {
@@ -442,7 +417,7 @@ func (n *recvTreeNode) addSuccessor(s *recvTreeNode){
 	n.successors = append(n.successors, s)
 }
 
-func (a *CSVAnalyzer) buildRecvTree(cid string, l *list.List) *recvTree{
+func (a *CSVAnalyzer) buildRecvTree(cid string, l *list.List) (*recvTree, []*BitswapEvent){
 	result := &recvTree{
 		cid:             cid,
 		root:            nil,
@@ -450,6 +425,9 @@ func (a *CSVAnalyzer) buildRecvTree(cid string, l *list.List) *recvTree{
 		duplicateRecv: 0,
 		nameNode:		make(map[string]*recvTreeNode),
 	}
+
+	//duplicateCounter := make([][]string, 0)
+	dupEvent := make([]*BitswapEvent,0)
 
 	for e := l.Front(); e != nil; e = e.Next(){
 		event := e.Value.(*BitswapEvent)
@@ -468,9 +446,14 @@ func (a *CSVAnalyzer) buildRecvTree(cid string, l *list.List) *recvTree{
 			if rNode.duplicateRecv > 0{
 				rNode.duplicateRecv += 1
 				fmt.Println(fmt.Sprintf("Duplicate block receive %s : %s -> %s", cid, publisher, receiver))
+				//tmpdup := []string{publisher, receiver,}
+				//duplicateCounter = append(duplicateCounter, tmpdup)
+				dupEvent = append(dupEvent, event)
 				break
 			}
 			rNode.duplicateRecv = 1
+			rNode.time = event.Time		// Only set time when receive event.
+
 
 			// Get publish node
 			pNode, ok := result.nameNode[publisher]
@@ -489,48 +472,21 @@ func (a *CSVAnalyzer) buildRecvTree(cid string, l *list.List) *recvTree{
 		}
 	}
 
-	return result
-}
-
-func dfsRECVTree(node *recvTreeNode, level int, writer *bufio.Writer) int {
-	var result = 0
-	//result = 0
-	writer.Write([]byte(fmt.Sprintf("%3s", node.peerName)))
-
-	if len(node.successors) == 0{
-		writer.Write([]byte("\n"))
-		return 1
-	}
-
-	for i, n := range node.successors{
-
-		if i==0 {
-			writer.Write([]byte("--"))
-			result = result + dfsRECVTree(n, level+1, writer)
-
-		}else{
-
-			for k:=0; k <= level; k++{
-				if k==0 {
-					writer.Write([]byte("   |"))
-				}else {
-					writer.Write([]byte("    |"))
-				}
-			}
-			writer.Write([]byte("-"))
-			result = result + dfsRECVTree(n, level+1, writer)
-		}
-	}
-	return result + 1
+	return result, dupEvent
 }
 
 func dfsRECVTreePrefix(tree *recvTree, node *recvTreeNode, prefix string, isLast bool, isFirst bool, writer *bufio.Writer) int {
 	var result = 0
 	delete(tree.nameNode, node.peerName)
+
+	millTimeFormat := "15:04:05.000"
+	//if node.time != nil {
+	tmpTime := node.time.Format(millTimeFormat)
+	//}
 	if isFirst {
-		writer.Write([]byte(fmt.Sprintf("--%3s", node.peerName)))
+		writer.Write([]byte(fmt.Sprintf("--[%s%3s]", tmpTime, node.peerName)))
 	}else {
-		writer.Write([]byte(fmt.Sprintf("%s|-%3s", prefix, node.peerName)))
+		writer.Write([]byte(fmt.Sprintf("%s|-[%s%3s]", prefix, tmpTime, node.peerName)))
 	}
 	if len(node.successors) == 0{
 		writer.Write([]byte("\n"))
@@ -538,10 +494,10 @@ func dfsRECVTreePrefix(tree *recvTree, node *recvTreeNode, prefix string, isLast
 	}
 	var nextPrefix string
 	if isLast {
-		nextPrefix = prefix + "     "
+		nextPrefix = prefix + "                   "
 		//fmt.Println(nextPrefix)
 	}else{
-		nextPrefix = prefix + "|    "
+		nextPrefix = prefix + "|                  "
 	}
 	for i, n := range node.successors{
 		nextIsLast := (i == len(node.successors)-1)
@@ -578,7 +534,8 @@ func getAnyNode(nameNode map[string] *recvTreeNode) *recvTreeNode{
 }
 
 func (a *CSVAnalyzer) writeRECVTree(outDir string, cid string, l *list.List){
-	tree := a.buildRecvTree(cid, l)
+	millTimeFormat := "15:04:05.000"
+	tree, dupEvent := a.buildRecvTree(cid, l)
 	//var counter int
 
 	txtPath := path.Join(outDir, fmt.Sprintf("%s.txt", cid))
@@ -597,14 +554,25 @@ func (a *CSVAnalyzer) writeRECVTree(outDir string, cid string, l *list.List){
 
 	//counted := dfsRECVTree(tree.root, 0, w)
 	var counted int
-	total := len(tree.nameNode)
+	//total := len(tree.nameNode)
 	for len(tree.nameNode) > 0 {
 		node := getAnyNode(tree.nameNode)
 		node = getRoot(node)
 		counted = counted + dfsRECVTreePrefix(tree, node, "", true, true, w)
 	}
-	fmt.Println(fmt.Sprintf("Counted nodes %d, Total nodes %d", counted, total))
+	//fmt.Println(fmt.Sprintf("Counted nodes %d, Total nodes %d", counted, total))
+	w.Write([]byte("Duplicated blk recv\n"))
+	for _, dup := range dupEvent{
+		w.Write([]byte(fmt.Sprintf("%s %3s => %3s\n",
+			dup.Time.Format(millTimeFormat), a.names.names[dup.GetPeer(dup.Direction[0])], a.names.names[dup.GetPeer(dup.Direction[1])])))
+	}
+
 	if err = w.Flush(); err != nil {
 		panic(err)
 	}
 }
+
+
+//================================
+//Analyze TKT and ACK
+//================================

@@ -23,6 +23,34 @@ type tmp struct{
 	cc string
 }
 
+func initDir(){
+	// Initialize output directory
+	ok, err := PathExists(*output)
+	if err != nil {
+		panic(err)
+	}
+
+	if !ok{
+		err = os.Mkdir(*output, os.ModePerm)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+
+	counterDir := path.Join(*output, "counters")
+	ok, err = PathExists(counterDir)
+	if err != nil {
+		panic(err)
+	}
+
+	if !ok{
+		err = os.Mkdir(counterDir, os.ModePerm)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+}
+
 func parseFile(filePath string) *Recorder{
 	f, err := os.Open(filePath)
 	if err != nil{
@@ -64,8 +92,11 @@ func parseFile(filePath string) *Recorder{
 			}
 		}
 	}
-	recorder.PrintCounter()
+	//recorder.PrintCounter()
 	recorder.CheckSelf()
+	if recorder.selfPeer == SELF {
+		fmt.Println("Cannot get peer id through check self")
+	}
 	ok := recorder.SetEventsPeer()
 	if !ok {
 		fmt.Println("Set peer failed")
@@ -80,6 +111,9 @@ func main(){
 	}
 
 	cmd := kingpin.MustParse(app.Parse(os.Args[1:]))
+	initDir()
+
+	// Create and merge recorder
 	fordir, _ := os.Stat(*input)
 	var recorder *Recorder
 	if fordir.IsDir(){
@@ -90,17 +124,17 @@ func main(){
 		}
 
 		for _, f := range files{
-			//if path.Ext(f.Name())=="log" {
 			fmt.Println("parse "+f.Name())
+			tmpRecorder := parseFile(path.Join(*input, f.Name()))
+			tmpRecorder.SaveCounter(path.Join(*output, "counters", tmpRecorder.selfPeer+".json"))
 			recorders = append(recorders, parseFile(path.Join(*input, f.Name())))
-			//}else{
-			//	fmt.Println("not a log file " + f.Name())
-			//}
 		}
 		recorder = MergeRecorders(recorders)
 	} else {
+		recorder.SaveCounter(path.Join(*output, "counters", recorder.selfPeer+ ".json"))
 		recorder = parseFile(*input)
 	}
+
 	//switch kingpin.MustParse(app.Parse(os.Args[1:])){
 	switch cmd{
 	case parseCmd.FullCommand():

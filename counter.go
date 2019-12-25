@@ -8,6 +8,7 @@ import (
 type Counter interface{
 	Count(*BitswapEvent)
 	String() string
+	//SaveCounter(savepath string) error
 }
 
 type MapCounter struct{
@@ -37,3 +38,7 @@ func (c *MapCounter) String() string{
 	}
 	return string(jsonString)
 }
+
+//func (c *MapCounter) SaveCounter(savepath string) error{
+//
+//}

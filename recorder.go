@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"container/list"
 	"fmt"
+	"os"
 	"time"
 )
 
@@ -66,6 +68,30 @@ func (r *Recorder) PrintCounter(){
 		fmt.Println("Recorder do not have a counter.")
 	} else {
 		fmt.Println(r.eventCounter.String())
+	}
+}
+
+func (r *Recorder) SaveCounter(outPath string){
+	if r.eventCounter == nil {
+		fmt.Println("Recorder do not have a counter.")
+	} else {
+		fo, err := os.Create(outPath)
+		if err != nil {
+			panic(err)
+		}
+
+		defer func(){
+			if err := fo.Close(); err != nil {
+				panic(err)
+			}
+		}()
+
+		w:= bufio.NewWriter(fo)
+
+		w.Write([]byte(r.eventCounter.String()))
+		if err = w.Flush(); err != nil {
+			panic(err)
+		}
 	}
 }
 
