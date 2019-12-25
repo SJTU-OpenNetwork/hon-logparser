@@ -61,6 +61,11 @@ func (p *peerName) Add(peerId string){
 	p.add(peerId)
 }
 
+func (p *peerName) GetandAdd(peerId string){
+    p.add(peerId)
+    return p.names[peerId]
+}
+
 func (p *peerName) Get(peerId string) string{
 	//p.add(peerId)
 	return p.names[peerId]
@@ -576,3 +581,8 @@ func (a *CSVAnalyzer) writeRECVTree(outDir string, cid string, l *list.List){
 //================================
 //Analyze TKT and ACK
 //================================
+
+func (a* CSVAnalyzer) AnalyzeTKT(){
+    outDir = path.Join(a.outputDir, "tickets")
+
+}
