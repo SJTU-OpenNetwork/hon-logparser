@@ -1,3 +1,12 @@
+package main
+
+import (
+    "bufio"
+    "container/list"
+    "fmt"
+    "path"
+)
+
 func (a *CSVAnalyzer) AnalyzeTKT(){
     // Initialize directory
     outDir = path.Join(a.outputDir, "tickets")
@@ -20,8 +29,21 @@ func (a *CSVAnalyzer) AnalyzeTKT(){
         switch event.Type{
         case "BLKRECV":
             cid := event.Info["Cid"].(string)
-            l, ok := cidMap[]
+            l, ok := cidMap[cid]
+            if !ok {
+                l = list.New()
+                blkMap[cid] = l
+            }
+            a.names.GetandAdd(event.GetPeer(event.Direction[0]))
+            a.names.GetandAdd(event.GetPeer(event.Direction[1]))
+            l.PushBack(event)
+        case "TKTSEND":
+
         }
+    }
+
+    for cid, l := range blkMap{
+    
     }
 
 }
@@ -31,10 +53,13 @@ func (a *CSVAnalyzer) AnalyzeTKT(){
 //      Send -> Accept
 //           -> Reject
 //           -> (UNKNOWN)
-// Direction:
+// Directiona:
 //      Name from Analyzer.names instead of peerId
+// Time:
+//      Time of event
+// 
 type simpleTktEvent struct{
     State string
     Direction []string
-
+    
 }
