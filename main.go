@@ -115,6 +115,7 @@ func parseRecursiveDir(dir string) *Recorder{
 	for _, f := range files{
 		var tmpRecorder *Recorder
 		tmpPath := path.Join(dir, f.Name())
+		fmt.Println(tmpPath)
 		fordir, _ := os.Stat(tmpPath)
 		if fordir.IsDir() {
 			tmpRecorder = parseRecursiveDir(tmpPath)
