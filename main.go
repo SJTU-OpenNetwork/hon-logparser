@@ -1,5 +1,10 @@
 package main
 
+/*
+ * TODO: Use muli-threads to parse files.
+ *
+ */
+
 import (
 	"bufio"
 	"fmt"
@@ -51,6 +56,17 @@ func initDir(){
 	}
 }
 
+func setRecorderSelf(recorder *Recorder){
+	recorder.CheckSelf()
+	if recorder.selfPeer == SELF {
+		fmt.Println("Cannot get peer id through check self")
+	}
+	ok := recorder.SetEventsPeer()
+	if !ok {
+		fmt.Println("Set peer failed")
+	}
+}
+
 func parseFile(filePath string) *Recorder{
 	f, err := os.Open(filePath)
 	if err != nil{
@@ -93,20 +109,15 @@ func parseFile(filePath string) *Recorder{
 		}
 	}
 	//recorder.PrintCounter()
-	recorder.CheckSelf()
-	if recorder.selfPeer == SELF {
-		fmt.Println("Cannot get peer id through check self")
-	}
-	ok := recorder.SetEventsPeer()
-	if !ok {
-		fmt.Println("Set peer failed")
-	}
+
 	return recorder
 }
 
 func parseRecursiveDir(dir string) *Recorder{
 	files, err := ioutil.ReadDir(dir)
 	recorders := make([]*Recorder, 0)
+
+	var isLeaf = false
 
 	if err != nil{
 		panic(err)
@@ -118,9 +129,13 @@ func parseRecursiveDir(dir string) *Recorder{
 		//fmt.Println(tmpPath)
 		fordir, _ := os.Stat(tmpPath)
 		if fordir.IsDir() {
+			if isLeaf {
+				panic("Invalid directory structure.")
+			}
 			tmpRecorder = parseRecursiveDir(tmpPath)
 		} else {
 			fmt.Println("Parse "+ tmpPath)
+			isLeaf = true
 			tmpRecorder = parseFile(tmpPath)
 		}
 		if tmpRecorder != nil{
@@ -133,7 +148,11 @@ func parseRecursiveDir(dir string) *Recorder{
 	if len(recorders) == 0{
 		return nil
 	} else {
-		return MergeRecorders(recorders)
+		mergedRecorder := MergeRecorders(recorders)
+		if isLeaf {
+			setRecorderSelf(mergedRecorder)
+		}
+		return mergedRecorder
 	}
 }
 
