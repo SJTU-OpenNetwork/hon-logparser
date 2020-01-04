@@ -105,7 +105,7 @@ func parseFile(filePath string) *Recorder{
 }
 
 func parseRecursiveDir(dir string) *Recorder{
-	files, err := ioutil.ReadDir(*input)
+	files, err := ioutil.ReadDir(dir)
 	recorders := make([]*Recorder, 0)
 
 	if err != nil{
@@ -115,7 +115,7 @@ func parseRecursiveDir(dir string) *Recorder{
 	for _, f := range files{
 		var tmpRecorder *Recorder
 		tmpPath := path.Join(dir, f.Name())
-		fmt.Println(tmpPath)
+		//fmt.Println(tmpPath)
 		fordir, _ := os.Stat(tmpPath)
 		if fordir.IsDir() {
 			tmpRecorder = parseRecursiveDir(tmpPath)
