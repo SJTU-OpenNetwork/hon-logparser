@@ -61,7 +61,7 @@ func (p *peerName) Add(peerId string){
 	p.add(peerId)
 }
 
-func (p *peerName) GetandAdd(peerId string){
+func (p *peerName) GetandAdd(peerId string) string{
     p.add(peerId)
     return p.names[peerId]
 }
@@ -566,7 +566,7 @@ func (a *CSVAnalyzer) writeRECVTree(outDir string, cid string, l *list.List){
 		counted = counted + dfsRECVTreePrefix(tree, node, "", true, true, w)
 	}
 	//fmt.Println(fmt.Sprintf("Counted nodes %d, Total nodes %d", counted, total))
-	w.Write([]byte("Duplicated blk recv\n"))
+	//w.Write([]byte("Duplicated blk recv\n"))
 	for _, dup := range dupEvent{
 		w.Write([]byte(fmt.Sprintf("%s %3s => %3s\n",
 			dup.Time.Format(millTimeFormat), a.names.names[dup.GetPeer(dup.Direction[0])], a.names.names[dup.GetPeer(dup.Direction[1])])))
@@ -577,12 +577,3 @@ func (a *CSVAnalyzer) writeRECVTree(outDir string, cid string, l *list.List){
 	}
 }
 
-
-//================================
-//Analyze TKT and ACK
-//================================
-
-func (a* CSVAnalyzer) AnalyzeTKT(){
-    outDir = path.Join(a.outputDir, "tickets")
-
-}

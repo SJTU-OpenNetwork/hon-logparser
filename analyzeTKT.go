@@ -1,15 +1,20 @@
 package main
 
 import (
-    "bufio"
     "container/list"
     "fmt"
+    "os"
     "path"
 )
 
+//================================
+//Analyze TKT and ACK
+//================================
+
+
 func (a *CSVAnalyzer) AnalyzeTKT(){
     // Initialize directory
-    outDir = path.Join(a.outputDir, "tickets")
+    outDir := path.Join(a.outputDir, "tickets")
     ok, err := PathExists(outDir)
     if err != nil{
         panic(err)
@@ -29,7 +34,7 @@ func (a *CSVAnalyzer) AnalyzeTKT(){
         switch event.Type{
         case "BLKRECV":
             cid := event.Info["Cid"].(string)
-            l, ok := cidMap[cid]
+            l, ok := blkMap[cid]
             if !ok {
                 l = list.New()
                 blkMap[cid] = l
@@ -38,13 +43,17 @@ func (a *CSVAnalyzer) AnalyzeTKT(){
             a.names.GetandAdd(event.GetPeer(event.Direction[1]))
             l.PushBack(event)
         case "TKTSEND":
+            cid := event.Info["Cid"].(string)
+            _, ok := tktMap[cid]
+            if !ok {
 
+            }
         }
     }
 
-    for cid, l := range blkMap{
+    //for cid, l := range blkMap{
     
-    }
+    //}
 
 }
 

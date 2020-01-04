@@ -104,6 +104,38 @@ func parseFile(filePath string) *Recorder{
 	return recorder
 }
 
+func parseRecursiveDir(dir string) *Recorder{
+	files, err := ioutil.ReadDir(*input)
+	recorders := make([]*Recorder, 0)
+
+	if err != nil{
+		panic(err)
+	}
+
+	for _, f := range files{
+		var tmpRecorder *Recorder
+		tmpPath := path.Join(dir, f.Name())
+		fordir, _ := os.Stat(tmpPath)
+		if fordir.IsDir() {
+			tmpRecorder = parseRecursiveDir(tmpPath)
+		} else {
+			fmt.Println("Parse "+ tmpPath)
+			tmpRecorder = parseFile(tmpPath)
+		}
+		if tmpRecorder != nil{
+			recorders = append(recorders, tmpRecorder)
+		} else {
+			fmt.Println(fmt.Sprintf("Get nil recorder when parse %s", tmpPath))
+		}
+	}
+
+	if len(recorders) == 0{
+		return nil
+	} else {
+		return MergeRecorders(recorders)
+	}
+}
+
 func main(){
 	if basicReg == nil || infoRegs == nil{
 		fmt.Println("Regulation initialization faild.")
@@ -117,21 +149,9 @@ func main(){
 	fordir, _ := os.Stat(*input)
 	var recorder *Recorder
 	if fordir.IsDir(){
-		recorders := make([]*Recorder, 0)
-		files, err := ioutil.ReadDir(*input)
-		if err != nil{
-			panic(err)
-		}
-
-		for _, f := range files{
-			fmt.Println("parse "+f.Name())
-			tmpRecorder := parseFile(path.Join(*input, f.Name()))
-			tmpRecorder.SaveCounter(path.Join(*output, "counters", tmpRecorder.selfPeer+".json"))
-			recorders = append(recorders, parseFile(path.Join(*input, f.Name())))
-		}
-		recorder = MergeRecorders(recorders)
+		recorder = parseRecursiveDir(*input)
 	} else {
-		recorder.SaveCounter(path.Join(*output, "counters", recorder.selfPeer+ ".json"))
+		//recorder.SaveCounter(path.Join(*output, "counters", recorder.selfPeer+ ".json"))
 		recorder = parseFile(*input)
 	}
 
