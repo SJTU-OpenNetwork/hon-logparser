@@ -43,8 +43,8 @@ var (
 
 		"ACKSEND"  : `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*).*`,
 		"ACKRECV"  : `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*), Type ([A-Z]*).*`,
-		//stream.TAG_WORKERSTART : `Stream ([\w]*), To ([\w]*).*`,
-		//stream.TAG_WORKEREND = `Stream ([\w]*), To ([\w]*),*`,
+		stream.TAG_WORKERSTART : `Stream ([\w]*), To ([\w]*).*`,
+		stream.TAG_WORKEREND = `Stream ([\w]*), To ([\w]*),*`,
 		//stream.TAG_BLOCKSEND = "BLOCKSEND"
 		//stream.TAG_BLOCKRECEIVE = "BLOCKRECV"
 		//stream.TAG_STREAMREQUEST = "STREAMREQUEST"
