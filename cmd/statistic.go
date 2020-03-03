@@ -22,12 +22,20 @@ func statistic(filePath string, outDir string) error {
 		//files, err := ioutil.ReadDir(filePath)
 		fmt.Printf("List all log files in %s\n", filePath)
 		fileMap := utils.ListLogFiles(filePath, make(map[string][]string))
-		for k, v := range fileMap {
-			fmt.Printf("%s:", k)
+		for _, v := range fileMap {
+			//fmt.Printf("%s:", k)
 			for _, f := range v {
-				fmt.Printf(f)
+				//fmt.Printf(f)
+				sta, err := statisticFile(f)
+				if err != nil {
+					return err
+				}
+				err = sta.SaveToDisk(outDir)
+				if err != nil {
+					return err
+				}
 			}
-			fmt.Printf("\n")
+			//fmt.Printf("\n")
 		}
 
 	} else {
