@@ -34,6 +34,7 @@ func RecorderFromFile(filePath string, parser *Parser, filter []string) (*Record
 	fmt.Printf("Begin parse for %s\n", filePath)
 	f, err := os.Open(filePath)
 	if err != nil{
+		fmt.Printf("Cannot open %s\n", filePath)
 		return nil, err
 	}
 	defer f.Close()
@@ -42,6 +43,7 @@ func RecorderFromFile(filePath string, parser *Parser, filter []string) (*Record
 	lineNum := 0
 	for {
 		line, _, err := reader.ReadLine()
+		fmt.Printf(string(line))
 		if err == io.EOF {
 			fmt.Println("Read to EOF\n")
 			break
