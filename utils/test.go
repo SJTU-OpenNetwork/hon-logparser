@@ -38,4 +38,5 @@ func TestJson(outDir string) error {
 		return err
 	}
 	fmt.Printf("%s\n", string(data))
+	return nil
 }

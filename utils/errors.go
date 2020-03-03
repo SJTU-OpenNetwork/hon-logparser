@@ -21,7 +21,7 @@ type ParseFailed struct{
 }
 
 func (e *ParseFailed) Error() string {
-	return fmt.Sprintf("Failed to parse %s use %s", e.str, e.expr)
+	return fmt.Sprintf("Failed to parse %s use %s", e.Str, e.Expr)
 }
 
 /**
