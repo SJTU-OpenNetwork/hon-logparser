@@ -23,7 +23,7 @@ type Parser struct {
 }
 
 func NewParser() (*Parser, error) {
-	fmt.Println("Initialize regulation expressions.")
+	fmt.Println("Initialize regulation expressions.\n")
 	infoRegs := make(map[string]*regexp.Regexp)
 	basicReg, err := regexp.Compile(basicExpr); if err != nil {return nil, err}
 	for k, exp := range infoExprs {

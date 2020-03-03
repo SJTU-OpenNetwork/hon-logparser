@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
+	"strings"
 )
 
 
@@ -70,4 +72,47 @@ func ReadBytes(filePath string) ([]byte, error) {
 	fw, err := os.Open(filePath); if err !=nil {return nil, err}
 	defer fw.Close()
 	return ioutil.ReadAll(fw)
+}
+
+/**
+ * Traverse a directory and find all the log files.
+ * Log file must have the format "uniqueId_index.log"
+ */
+func ListLogFiles(dirPath string, fileMap map[string][]string) map[string][]string {
+	fstat, err := os.Stat(dirPath)
+	if err != nil {
+		fmt.Printf(err.Error())
+		return fileMap
+	}
+
+	if fstat.IsDir() {
+		files, err := ioutil.ReadDir(dirPath)
+		if err != nil {
+			return fileMap
+		}
+		for _, f := range files {
+			fileMap = ListLogFiles(path.Join(dirPath, f.Name()), fileMap)
+		}
+	} else {
+		fileName := fstat.Name()
+		filePath := path.Join(dirPath, fileName)
+		fmt.Printf("Traverse to %s\n", fileName)
+		fileExtInfo := strings.Split(fileName, ".")
+		if len(fileExtInfo) < 2 || fileExtInfo[1] != "log" {
+			fmt.Printf("%s is not a log file\n", filePath)
+			return fileMap
+		}
+
+		fileNameInfo := strings.Split(fileName, "_")
+		name := fileNameInfo[0]
+
+		_, ok := fileMap[name]
+		if ok {
+			fileMap[name] = append(fileMap[name], filePath)
+		} else {
+			fileMap[name] = []string{filePath}
+		}
+	}
+
+	return fileMap
 }
