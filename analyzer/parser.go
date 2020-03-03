@@ -57,6 +57,9 @@ func (parser *Parser) ParseLineWithFilter(line string, filter map[string]interfa
 	if info == nil {	// mismatch basicReg
 		return nil, nil
 	}
+	for k, v := range info {
+		fmt.Printf("%s: %s\n", k, v)
+	}
 	fmt.Printf("Check filter\n")
 	_, ok := filter[info["event"]]
 	if !ok {
