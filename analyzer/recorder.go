@@ -1,23 +1,77 @@
-package main
+package analyzer
 
 import (
 	"bufio"
 	"container/list"
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"time"
 )
 
+/**
+ * Build an recorder from a log file.
+ * 	- filePath: path of file.
+ *	- filter: recorder will only contain events with type in filter
+ */
+func RecorderFromFile(filePath string, parser *Parser, filter []string) (*Recorder, error) {
+	fmt.Printf("Create filter for recorder\n")
+	mapFilter := make(map[string]interface{})
+	if filter == nil || len(filter)==0 {
+		filter = allEventType
+	}
+	for _, str := range filter {
+		mapFilter[str] = struct{}{}
+	}
+
+	fmt.Printf("Initialize recorder\n")
+	rec := CreateRecorder()
+	rec.AddMapCounter()
+	rec.SetFilter(filter)
+
+	fmt.Printf("Begin parse for %s\n", filePath)
+	f, err := os.Open(filePath)
+	if err != nil{
+		return nil, err
+	}
+	defer f.Close()
+
+	reader := bufio.NewReader(f)
+	lineNum := 0
+	for {
+		line, _, err := reader.ReadLine()
+		if err == io.EOF {
+			fmt.Println("Read to EOF\n")
+			break
+		}
+		event, err := parser.ParseLineWithFilter(string(line), mapFilter)
+		if err == nil {
+			rec.AddEvent(event)
+		}else{
+			fmt.Printf("Error: %s\n", err.Error())
+		}
+		lineNum++
+		if lineNum % 10 == 0 {
+			fmt.Printf("line: %d\r", lineNum)
+		}
+	}
+
+	return rec, nil
+}
+
 type Recorder struct{
+	eventFilter  []string		// filter within recorder have nothing to do with how to parse a file.
+								// It just contains info about the event type in a recorder.
 	selfPeer     string			// "" means it is a recorder merged from several sub-recorders.
 	eventList    *list.List	// Store the events
-							// We use list instead of a simple slice
+	// We use list instead of a simple slice
 	eventCounter Counter
 }
 
 type Event struct{
 	Peer string		// Peer is meaningless when it belongs to the recorder of one log files.
-					// But it is used to store the event owner when we merge several recorders.
+	// But it is used to store the event owner when we merge several recorders.
 	Type string
 	Time time.Time
 	Direction []string
@@ -54,6 +108,10 @@ func (r *Recorder) AddMapCounter(){
 
 		r.eventCounter = CreateMapCounter()
 	}
+}
+
+func (r *Recorder) SetFilter(filter []string) {
+	r.eventFilter = filter
 }
 
 func (r *Recorder) AddEvent(event *Event){
@@ -126,6 +184,7 @@ func (r *Recorder) CheckSelf(){
 		case "ACKRECV":
 			// [ACKRECV] Cid <cid>, Publisher <peerid>, Receiver <peerid>, Type <ACCEPT|CANCEL>
 			r.checkPerSelf(event.Info["Publisher"].(string))
+
 		}
 	}
 }
@@ -156,10 +215,10 @@ func MergeRecorders(rs []*Recorder) *Recorder{
 		//fmt.Println(len(rch))
 		r1 := <-rch
 		select {
-			case r2 := <-rch:
-				rch <- mergeTwoRecorders(r1, r2)
-			default:
-				return r1
+		case r2 := <-rch:
+			rch <- mergeTwoRecorders(r1, r2)
+		default:
+			return r1
 		}
 	}
 }
@@ -195,3 +254,38 @@ func mergeTwoRecorders(r1 *Recorder, r2 *Recorder) *Recorder {
 	}
 	return result
 }
+
+type Counter interface{
+	Count(*Event)
+	String() string
+	//SaveCounter(savepath string) error
+}
+
+type MapCounter struct{
+	datastore map[string]int
+}
+
+func CreateMapCounter() *MapCounter{
+	return &MapCounter{
+		datastore: make(map[string]int),
+	}
+}
+
+func (c *MapCounter) Count(event *Event){
+	_, ok := c.datastore[event.Type]
+	if ok {
+		c.datastore[event.Type] += 1
+	} else {
+		c.datastore[event.Type] = 1
+	}
+}
+
+func (c *MapCounter) String() string{
+	jsonString, err := json.MarshalIndent(c.datastore, "", "\t")
+	if err != nil{
+		fmt.Println(err.Error())
+		return ""
+	}
+	return string(jsonString)
+}
+

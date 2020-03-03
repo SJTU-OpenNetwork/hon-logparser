@@ -30,7 +30,7 @@ func (a *CSVAnalyzer) AnalyzeTKT(){
     blkMap := make(map[string] *list.List)
     tktMap := make(map[string]map[string] *list.List)
     for e := a.recorder.eventList.Front(); e != nil; e = e.Next(){
-        event := e.Value.(*BitswapEvent)
+        event := e.Value.(*Event)
         switch event.Type{
         case "BLKRECV":
             cid := event.Info["Cid"].(string)

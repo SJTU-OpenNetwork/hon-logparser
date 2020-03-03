@@ -6,7 +6,7 @@ import (
 )
 
 type Counter interface{
-	Count(*BitswapEvent)
+	Count(*Event)
 	String() string
 	//SaveCounter(savepath string) error
 }
@@ -21,7 +21,7 @@ func CreateMapCounter() *MapCounter{
 	}
 }
 
-func (c *MapCounter) Count(event *BitswapEvent){
+func (c *MapCounter) Count(event *Event){
 	_, ok := c.datastore[event.Type]
 	if ok {
 		c.datastore[event.Type] += 1

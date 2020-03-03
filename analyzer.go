@@ -105,7 +105,7 @@ func reverseString(s string) string {
 
 func (a *CSVAnalyzer) AnalyzeAll(){
 	for e := a.recorder.eventList.Front(); e != nil; e = e.Next() {
-		event :=  e.Value.(*BitswapEvent)
+		event :=  e.Value.(*Event)
 		if Contains(a.filter, event.Type){
 			a.names.Add(event.GetPeer(event.Direction[0]))
 			a.names.Add(event.GetPeer(event.Direction[1]))
@@ -156,7 +156,7 @@ func (a *CSVAnalyzer) csvContain(length int, index int, contains string) string{
 	return result
 }
 
-func (a *CSVAnalyzer) csvBLKLine(e *BitswapEvent) string{
+func (a *CSVAnalyzer) csvBLKLine(e *Event) string{
 	if e.Type != "BLKRECV"{
 		panic(&WrongEventType{eventType: e.Type})
 	}
@@ -170,7 +170,7 @@ func (a *CSVAnalyzer) csvBLKLine(e *BitswapEvent) string{
 	return result
 }
 
-func (a *CSVAnalyzer) csvAllLine(e *BitswapEvent) string{
+func (a *CSVAnalyzer) csvAllLine(e *Event) string{
 	//fmt.Println("new line")
 	cid := e.Info["Cid"].(string)
 	result := fmt.Sprintf("%s, %s, %s", e.Time.String(), cid, e.Type)
@@ -181,7 +181,7 @@ func (a *CSVAnalyzer) csvAllLine(e *BitswapEvent) string{
 	return result
 }
 
-//func (a *CSVAnalyzer) csvAllLine(e *BitswapEvent) string{
+//func (a *CSVAnalyzer) csvAllLine(e *Event) string{
 //	cid := e.Info["Cid"].(string)
 //	result := fmt.Sprintf("%s, %s, %s", e.Time.String(), cid, e.Type)
 //	var publisher string
@@ -270,7 +270,7 @@ func (a *CSVAnalyzer) writeAllCSV(){
 	}
 
 	for e := a.eventList.Front(); e != nil; e = e.Next(){
-		event := e.Value.(*BitswapEvent)
+		event := e.Value.(*Event)
 		if Contains(a.filter, event.Type) {
 			line := a.csvAllLine(event)
 			if _, err := w.Write([]byte(line)); err != nil {
@@ -333,7 +333,7 @@ func (a *CSVAnalyzer) writeBLKCSV(outDir string, cid string, l *list.List){
 	}
 
 	for e := a.eventList.Front(); e != nil; e = e.Next(){
-		line := a.csvBLKLine(e.Value.(*BitswapEvent))
+		line := a.csvBLKLine(e.Value.(*Event))
 		if _, err := w.Write([]byte(line)); err != nil{
 			panic(err)
 		}
@@ -366,10 +366,10 @@ func (a *CSVAnalyzer) AnalyzerRECVTree(){
 	cidMap := make(map[string] *list.List)
 
 	for e := a.recorder.eventList.Front(); e != nil; e = e.Next(){
-		switch e.Value.(*BitswapEvent).Type{
+		switch e.Value.(*Event).Type{
 		case "BLKRECV":
 			// [BLKRECV] Cid <cid>, From <peerid>
-			event := e.Value.(*BitswapEvent)
+			event := e.Value.(*Event)
 			//fmt.Println(Map2json(event.Info))
 			cid := event.Info["Cid"].(string)
 			l, ok := cidMap[cid]
@@ -422,7 +422,7 @@ func (n *recvTreeNode) addSuccessor(s *recvTreeNode){
 	n.successors = append(n.successors, s)
 }
 
-func (a *CSVAnalyzer) buildRecvTree(cid string, l *list.List) (*recvTree, []*BitswapEvent){
+func (a *CSVAnalyzer) buildRecvTree(cid string, l *list.List) (*recvTree, []*Event){
 	result := &recvTree{
 		cid:             cid,
 		root:            nil,
@@ -432,10 +432,10 @@ func (a *CSVAnalyzer) buildRecvTree(cid string, l *list.List) (*recvTree, []*Bit
 	}
 
 	//duplicateCounter := make([][]string, 0)
-	dupEvent := make([]*BitswapEvent,0)
+	dupEvent := make([]*Event,0)
 
 	for e := l.Front(); e != nil; e = e.Next(){
-		event := e.Value.(*BitswapEvent)
+		event := e.Value.(*Event)
 		switch event.Type{
 		case "BLKRECV":
 			publisher := a.names.names[event.GetPeer(event.Direction[0])]

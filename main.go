@@ -8,6 +8,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/SJTU-OpenNetwork/hon-logparser/cmd"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
 	"io/ioutil"
@@ -190,7 +191,7 @@ func main(){
 		analyzer.AnalyzerRECVTree()
 	}
 	*/
-	err := run()
+	err := cmd.Run()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

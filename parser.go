@@ -52,6 +52,7 @@ var (
 
 	}
 	infoRegs  map[string]*regexp.Regexp
+
 	basicExpr = `([\d -\.:]{26}) ([A-Z]*) ([a-z-_\.]*) ([a-z-_:\.0-9A-Z]*) \[([A-Z]*)\] (.*)`
 	basicReg  *regexp.Regexp
 	err       error
@@ -109,7 +110,7 @@ func extractInfo(event string, info string) ([]string, error) {
 	}
 }
 
-func parseInfo(info map[string]string) (*BitswapEvent, error) {
+func parseInfo(info map[string]string) (*Event, error) {
 
 	tmpTime, _ := parseTimestamp(info["time"])
 	params, err := extractInfo(info["event"], info["eventInfo"])
@@ -120,7 +121,7 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 	switch info["event"]{
 	case "MSGRECV":
 		// [MSGRECV] From <peerid>
-		return &BitswapEvent{
+		return &Event{
 			Type: info["event"],
 			Time: tmpTime,
 			Direction: []string{
@@ -134,7 +135,7 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 		// [BLKRECV] Cid <cid>, From <peerid>
 		// [BLKCANCEL] Cid <cid>, From <peerid>
 		// [WANTRECV] Cid <cid>, From <peerid>
-		return &BitswapEvent{
+		return &Event{
 			Type: info["event"],
 			Time: tmpTime,
 			Direction:[]string{
@@ -148,7 +149,7 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 	case "BLKSEND", "WANTSEND":
 		// [BLKSEND] Cid <cid>, SendTo <peerid>
 		// [WANTSEND] Cid <cid>, SendTo <peerid>
-		return &BitswapEvent{
+		return &Event{
 			Type: info["event"],
 			Time: tmpTime,
 			Direction: []string{
@@ -161,7 +162,7 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 		},nil
 	case "TKTSEND":
 		// [TKTSEND] Cid <cid>, SendTo <peerid>, TimeStamp <time>
-		return &BitswapEvent{
+		return &Event{
 			Type: info["event"],
 			Time: tmpTime,
 			Direction: []string{
@@ -175,7 +176,7 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 		},nil
 	case "ACKSEND":
 		// [ACKSEND] Cid <cid>, Publisher <peerid>, Receiver <peerid>
-		return &BitswapEvent{
+		return &Event{
 			Type: info["event"],
 			Time: tmpTime,
 			Direction: []string{
@@ -189,7 +190,7 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 		}, nil
 	case "TKTRECV":
 		// [TKTRECV] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
-		return &BitswapEvent{
+		return &Event{
 			Type: info["event"],
 			Time: tmpTime,
 			Direction: []string{
@@ -205,7 +206,7 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 	case "TKTREJECT", "TKTACCEPT":
 		// [TKTREJECT] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
 		// [TKTACCEPT] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
-		return &BitswapEvent{
+		return &Event{
 			Type: info["event"],
 			Time: tmpTime,
 			Direction: []string{
@@ -220,7 +221,7 @@ func parseInfo(info map[string]string) (*BitswapEvent, error) {
 		}, nil
 	case "ACKRECV":
 		// [ACKRECV] Cid <cid>, Publisher <peerid>, Receiver <peerid>, Type <ACCEPT|CANCEL>
-		return &BitswapEvent{
+		return &Event{
 			Type: info["event"],
 			Time: tmpTime,
 			Direction: []string{
@@ -257,7 +258,7 @@ func testParse(info map[string]string){
 	 */
 }
 
-func ParseLine(line string) (*BitswapEvent, error) {
+func ParseLine(line string) (*Event, error) {
 	info, err := extractBasic(line)
 	if err != nil{
 		return nil, err
