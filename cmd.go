@@ -23,6 +23,7 @@ func run() error {
 	testCmd := appCmd.Command("test", "Test the load and write of json files.")
 	testDir := testCmd.Arg("ourdir", "Output directory.").Required().String()
 	cmds[testCmd.FullCommand()] = func() error {
+		//test.TestJson()
 		return testJson(*testDir)
 	}
 
@@ -49,9 +50,11 @@ func testJson(outDir string) error{
 	testMap["key_string"] = "aaa"
 	testMap["key_slice"] = []string{"a", "b", "c"}
 
-	js, err := json.Marshal(testMap)
+	js, err := json.MarshalIndent(testMap, "", "  ")
 	jsFilePath := path.Join(outDir, "testmap.json")
 	_, err = WriteBytes(jsFilePath, js); if err !=nil {return err}
 
+	data, err := ReadBytes(jsFilePath); if err != nil {return err}
+	fmt.Printf(string(data))
 	return nil
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"time"
 )
@@ -116,5 +117,14 @@ func WriteBytes(filePath string, b []byte) (int, error) {
 	}
 	defer fw.Close()
 	return fw.Write(b)
+}
+
+/**
+ * ReadBytes read data from a file
+ */
+func ReadBytes(filePath string) ([]byte, error) {
+	fw, err := os.Open(filePath); if err !=nil {return nil, err}
+	defer fw.Close()
+	return ioutil.ReadAll(fw)
 }
 
