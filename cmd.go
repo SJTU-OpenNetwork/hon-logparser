@@ -87,7 +87,7 @@ func testJson(outDir string) error{
 	rec.AddEvent(evt1)
 	rec.AddEvent(evt2)
 
-	js2, err := json.MarshalIndent(rec, "", "  ")
+	js2, err := json.MarshalIndent(*rec, "", "  ")
 	jsFilePath2 := path.Join(outDir, "testRecorder.json")
 	_, err = WriteBytes(jsFilePath2, js2); if err !=nil {return err}
 
