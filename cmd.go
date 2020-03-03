@@ -6,6 +6,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 	"path"
+	"time"
 )
 
 type cmdsMap map[string]func() error
@@ -42,7 +43,7 @@ func testJson(outDir string) error{
 	testMap := make(map[string]interface{})
 	ok, err := PathExists(outDir); if err != nil {return err}
 	if !ok {
-		fmt.Printf("Make directory %s", outDir)
+		fmt.Printf("Make directory %s\n", outDir)
 		err = os.Mkdir(outDir, os.ModePerm); if err!=nil {return err}
 	}
 
@@ -55,6 +56,43 @@ func testJson(outDir string) error{
 	_, err = WriteBytes(jsFilePath, js); if err !=nil {return err}
 
 	data, err := ReadBytes(jsFilePath); if err != nil {return err}
-	fmt.Printf(string(data))
+	fmt.Printf("%s\n", string(data))
+
+	fmt.Printf("Test to load and write recorder file")
+	rec := CreateRecorder()
+	evt1 := &BitswapEvent{
+		Peer:      "peerid",
+		Type:      "eventType",
+		Time:      time.Now(),
+		Direction: []string{"From", "To"},
+		Info:      map[string]interface{}{
+			"key_int": 1,
+			"key_string": "aa",
+			"key_slice": []string{"v1","v2"},
+		},
+	}
+
+	evt2 := &BitswapEvent{
+		Peer:      "peerid",
+		Type:      "eventType",
+		Time:      time.Now(),
+		Direction: []string{"From", "To"},
+		Info:      map[string]interface{}{
+			"key_int": 1,
+			"key_string": "aa",
+			"key_slice": []string{"v1","v2"},
+		},
+	}
+
+	rec.AddEvent(evt1)
+	rec.AddEvent(evt2)
+
+	js2, err := json.MarshalIndent(rec, "", "  ")
+	jsFilePath2 := path.Join(outDir, "testRecorder.json")
+	_, err = WriteBytes(jsFilePath2, js2); if err !=nil {return err}
+
+	data2, err := ReadBytes(jsFilePath2); if err != nil {return err}
+	fmt.Printf("%s\n", string(data2))
+
 	return nil
 }
