@@ -96,14 +96,14 @@ func ListLogFiles(dirPath string, fileMap map[string][]string) map[string][]stri
 	} else {
 		fileName := fstat.Name()
 		filePath := path.Join(dirPath, fileName)
-		fmt.Printf("Traverse to %s\n", fileName)
+		//fmt.Printf("Traverse to %s\n", fileName)
 		fileExtInfo := strings.Split(fileName, ".")
 		if len(fileExtInfo) < 2 || fileExtInfo[1] != "log" {
 			fmt.Printf("%s is not a log file\n", filePath)
 			return fileMap
 		}
 
-		fileNameInfo := strings.Split(fileName, "_")
+		fileNameInfo := strings.Split(fileExtInfo[0], "_")
 		name := fileNameInfo[0]
 
 		_, ok := fileMap[name]
