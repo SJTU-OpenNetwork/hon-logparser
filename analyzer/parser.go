@@ -47,6 +47,7 @@ func parseTimestamp(str string) (time.Time, error){
 }
 
 func (parser *Parser) ParseLineWithFilter(line string, filter map[string]interface{}) (*Event, error) {
+	fmt.Printf("extractBasic\n")
 	info, err := parser.extractBasic(line)
 	//fmt.Printf(filter)
 	fmt.Printf("basic extracted\n")
