@@ -14,12 +14,15 @@ import (
 	"os"
 	"path"
 )
+
+
 var (
 	app	  = kingpin.New("hon-logparser", "A command-line tool used to parse log of HON project.")
 	input = app.Flag("input", "Input log file").Short('i').Required().String()
 	output = app.Flag("output", "Output directory").Short('o').Required().String()
 
 	parseCmd = app.Command("parse", "Parse the log infos")
+	analyseCmd = app.Command("analyse", "Analyse the log file")
 )
 
 type tmp struct{
@@ -157,6 +160,7 @@ func parseRecursiveDir(dir string) *Recorder{
 }
 
 func main(){
+	/*
 	if basicReg == nil || infoRegs == nil{
 		fmt.Println("Regulation initialization faild.")
 		return
@@ -185,8 +189,11 @@ func main(){
 		analyzer.AnalyzeAll()
 		analyzer.AnalyzerRECVTree()
 	}
-
-	// default value of unset Flag (*output for eg.) is ""
-	// default value of string inside struct is ""
+	*/
+	err := run()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 }

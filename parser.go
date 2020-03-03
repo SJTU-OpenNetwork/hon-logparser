@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"regexp"
+	"github.com/SJTU-OpenNetwork/hon-textile/stream"
 )
 
 /**
@@ -42,6 +43,13 @@ var (
 
 		"ACKSEND"  : `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*).*`,
 		"ACKRECV"  : `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*), Type ([A-Z]*).*`,
+		//stream.TAG_WORKERSTART : `Stream ([\w]*), To ([\w]*).*`,
+		//stream.TAG_WORKEREND = `Stream ([\w]*), To ([\w]*),*`,
+		//stream.TAG_BLOCKSEND = "BLOCKSEND"
+		//stream.TAG_BLOCKRECEIVE = "BLOCKRECV"
+		//stream.TAG_STREAMREQUEST = "STREAMREQUEST"
+		//stream.TAG_STREAMRESPONSE = "STREAMRESPONSE"
+
 	}
 	infoRegs  map[string]*regexp.Regexp
 	basicExpr = `([\d -\.:]{26}) ([A-Z]*) ([a-z-_\.]*) ([a-z-_:\.0-9A-Z]*) \[([A-Z]*)\] (.*)`

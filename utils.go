@@ -8,7 +8,9 @@ import (
 )
 
 
-
+/**
+ * PathExists return true if the path exists.
+ */
 func PathExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -102,3 +104,17 @@ func Contains(sl []string, v string) bool {
 	}
 	return false
 }
+
+/**
+ * WriteBytes write data into a file
+ */
+func WriteBytes(filePath string, b []byte) (int, error) {
+	//os.MkdirAll(path.Dir(filePath), os.ModePerm)
+	fw, err := os.Create(filePath)
+	if err != nil {
+		return 0, err
+	}
+	defer fw.Close()
+	return fw.Write(b)
+}
+
