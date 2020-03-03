@@ -50,10 +50,7 @@ func statistic(filePath string, outDir string) error {
 	return nil
 }
 
-func statisticRecurisiveDir(dirPath string) ([]*analyzer.Statistic, error) {
-	// find the path of all the files:
 
-}
 
 func statisticFile(filePath string) (*analyzer.Statistic, error) {
 	// parse the whole file
