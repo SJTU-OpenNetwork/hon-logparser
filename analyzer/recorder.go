@@ -37,6 +37,7 @@ func RecorderFromFile(filePath string, parser *Parser, filter []string) (*Record
 		fmt.Printf("Cannot open %s\n", filePath)
 		return nil, err
 	}
+	fmt.Printf("File opened\n")
 	defer f.Close()
 
 	reader := bufio.NewReader(f)
