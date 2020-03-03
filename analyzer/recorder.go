@@ -17,6 +17,7 @@ import (
  */
 func RecorderFromFile(filePath string, parser *Parser, filter []string) (*Recorder, error) {
 	fmt.Printf("Create filter for recorder\n")
+	//fmt.Printf(filter)
 	mapFilter := make(map[string]interface{})
 	if filter == nil || len(filter)==0 {
 		filter = allEventType

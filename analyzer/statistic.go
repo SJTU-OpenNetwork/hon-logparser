@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"fmt"
 	"github.com/SJTU-OpenNetwork/hon-logparser/utils"
 	"os"
 	"path"
@@ -14,7 +15,9 @@ type Statistic struct {
 }
 
 func CountForFile(parser *Parser, filePath string) (*Statistic, error){
-
+	if parser == nil {
+		fmt.Printf("Nil parser !!!!!!\n")
+	}
 	// Make sure to set a filter that the recorder can check self peer.
 	recorder, err := RecorderFromFile(filePath, parser, []string{"BLKSEND", "BLKRECV", "TKTRECV"})
 	if err != nil {
