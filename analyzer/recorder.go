@@ -37,19 +37,19 @@ func RecorderFromFile(filePath string, parser *Parser, filter []string) (*Record
 		fmt.Printf("Cannot open %s\n", filePath)
 		return nil, err
 	}
-	fmt.Printf("File opened\n")
+	//fmt.Printf("File opened\n")
 	defer f.Close()
 
 	reader := bufio.NewReader(f)
 	lineNum := 0
 	for {
 		line, _, err := reader.ReadLine()
-		fmt.Printf(string(line))
+		//fmt.Printf(string(line))
 		if err == io.EOF {
 			fmt.Println("Read to EOF\n")
 			break
 		}
-		fmt.Printf("Try to parse line\n")
+		//fmt.Printf("Try to parse line\n")
 		event, err := parser.ParseLineWithFilter(string(line), mapFilter)
 		if err == nil  && event != nil{	//Note that event would be nil if the line can not be parsed.
 			rec.AddEvent(event)

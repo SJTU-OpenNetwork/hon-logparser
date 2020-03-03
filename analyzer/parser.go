@@ -47,26 +47,24 @@ func parseTimestamp(str string) (time.Time, error){
 }
 
 func (parser *Parser) ParseLineWithFilter(line string, filter map[string]interface{}) (*Event, error) {
-	fmt.Printf("extractBasic\n")
+	//fmt.Printf("extractBasic\n")
 	info, err := parser.extractBasic(line)
 	//fmt.Printf(filter)
-	fmt.Printf("basic extracted\n")
+	//fmt.Printf("basic extracted\n")
 	if err != nil{
 		return nil, err
 	}
 	if info == nil {	// mismatch basicReg
 		return nil, nil
 	}
-	for k, v := range info {
-		fmt.Printf("%s: %s\n", k, v)
-	}
-	fmt.Printf("Check filter\n")
+
+	//fmt.Printf("Check filter\n")
 	_, ok := filter[info["event"]]
 	if !ok {
-		fmt.Printf("No such filter\n")
+		//fmt.Printf("No such filter\n")
 		return nil, nil
 	}
-	fmt.Printf("Find filter\n")
+	//fmt.Printf("Find filter\n")
 
 	event, err := parser.extractInfo(info)
 	if err != nil {
