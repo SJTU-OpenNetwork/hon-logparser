@@ -9,22 +9,22 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/SJTU-OpenNetwork/hon-logparser/cmd"
-	"gopkg.in/alecthomas/kingpin.v2"
+	//"gopkg.in/alecthomas/kingpin.v2"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
 )
 
-
-var (
-	app	  = kingpin.New("hon-logparser", "A command-line tool used to parse log of HON project.")
-	input = app.Flag("input", "Input log file").Short('i').Required().String()
-	output = app.Flag("output", "Output directory").Short('o').Required().String()
-
-	parseCmd = app.Command("parse", "Parse the log infos")
-	analyseCmd = app.Command("analyse", "Analyse the log file")
-)
+//
+//var (
+//	app	  = kingpin.New("hon-logparser", "A command-line tool used to parse log of HON project.")
+//	input = app.Flag("input", "Input log file").Short('i').Required().String()
+//	output = app.Flag("output", "Output directory").Short('o').Required().String()
+//
+//	parseCmd = app.Command("parse", "Parse the log infos")
+//	analyseCmd = app.Command("analyse", "Analyse the log file")
+//)
 
 type tmp struct{
 	aa string
@@ -32,33 +32,6 @@ type tmp struct{
 	cc string
 }
 
-func initDir(){
-	// Initialize output directory
-	ok, err := PathExists(*output)
-	if err != nil {
-		panic(err)
-	}
-
-	if !ok{
-		err = os.Mkdir(*output, os.ModePerm)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-	}
-
-	counterDir := path.Join(*output, "counters")
-	ok, err = PathExists(counterDir)
-	if err != nil {
-		panic(err)
-	}
-
-	if !ok{
-		err = os.Mkdir(counterDir, os.ModePerm)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-	}
-}
 
 func setRecorderSelf(recorder *Recorder){
 	recorder.CheckSelf()
