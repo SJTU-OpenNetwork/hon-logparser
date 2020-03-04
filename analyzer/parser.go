@@ -1,9 +1,11 @@
 package analyzer
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/SJTU-OpenNetwork/hon-logparser/utils"
 	"regexp"
+	"strconv"
 	"time"
 
 	//"github.com/SJTU-OpenNetwork/hon-textile/stream"
@@ -88,24 +90,49 @@ func (parser *Parser) ParseLine(line string) (*Event, error){
 	return event, nil
 }
 
-func (parser *Parser) ParseLineForTime(line string) map[string]string {
+func (parser *Parser) ParseLineForTime(line string) *TimeInfo {
 	// var timeExpr = `([\d -\.:]{26}) ([A-Z]*) ([a-z-_\.]*) ([a-z-_:\.0-9A-Z]*)
 	// =====pic_cid:([\w]*) millis:([0-9]*) bytes:([0-9]*) bytePerMills:([0-9]*).*`
 	params := parser.timeReg.FindStringSubmatch(line)
 	if len(params) > 6 {
-		return map[string] string{
-			"origin": params[0],
-			"time": params[1],
-			"type": params[2],
-			"system": params[3],
-			"location": params[4],
-			"cid": params[5],
-			"ms": params[6],
-			"bytes": params[7],
-			"bytePerMs": params[8],
-		}
+		res := &TimeInfo{}
+		res.Cid = params[5]
+		res.Ms, _ = strconv.Atoi(params[6])
+		res.Bytes, _ = strconv.Atoi(params[7])
+		res.BytePerMs, _ = strconv.Atoi(params[8])
+		return res
+		//return map[string] string{
+		//	"origin": params[0],
+		//	"time": params[1],
+		//	"type": params[2],
+		//	"system": params[3],
+		//	"location": params[4],
+		//	"cid": params[5],
+		//	"ms": params[6],
+		//	"bytes": params[7],
+		//	"bytePerMs": params[8],
+		//}
 	} else {
 		return nil		// Do not raise error. As it is common the line mismatches basicReg.
+	}
+}
+
+// TimeInfo contains basic info extract from one line in log file
+// It may be useless to define a specific struct for it if we only use the time info as is.
+// But it would be helpful if we want to do further analysing about time info.
+type TimeInfo struct {
+	Cid string
+	Ms int
+	Bytes int
+	BytePerMs int
+}
+
+func (ti *TimeInfo) PrintOut(){
+	js, err := json.Marshal(ti)
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
+	} else {
+		fmt.Printf("%s\n", string(js))
 	}
 }
 

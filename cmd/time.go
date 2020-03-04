@@ -18,6 +18,7 @@ func time(filePath string, outDir string) error {
 
 	fmt.Printf("Make directory for %s", outDir)
 	err = os.MkdirAll(outDir, os.ModePerm)
+	var timeInfos []*analyzer.TimeInfo
 	if err != nil {
 		return err
 	}
@@ -28,12 +29,18 @@ func time(filePath string, outDir string) error {
 		fileMap := utils.ListLogFiles(filePath, make(map[string][]string))
 		for _, v := range fileMap {
 			for _, f := range v {
-				_, err= analyzer.TimeFromFile(parser, f); if (err != nil) {return err}
+				timeInfos, err = analyzer.TimeFromFile(parser, f); if (err != nil) {return err}
 			}
 		}
 
 	} else {
-		_, err = analyzer.TimeFromFile(parser, filePath)
+		timeInfos, err = analyzer.TimeFromFile(parser, filePath); if (err != nil) {return err}
+	}
+
+	if timeInfos != nil {
+		for _, ti := range timeInfos {
+			ti.PrintOut()
+		}
 	}
 
 	return nil

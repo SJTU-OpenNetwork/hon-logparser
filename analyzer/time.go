@@ -7,13 +7,9 @@ import (
 	"os"
 )
 
-// TimePerFile contains information about file receiving time
-// for each pic_cid in one log file.
-type TimePerFile struct {
 
-}
 
-func TimeFromFile(parser *Parser, filePath string) (*TimePerFile, error){
+func TimeFromFile(parser *Parser, filePath string) ([]*TimeInfo, error){
 	f, err := os.Open(filePath)
 	if err != nil{
 		fmt.Printf("Cannot open %s\n", filePath)
@@ -23,6 +19,7 @@ func TimeFromFile(parser *Parser, filePath string) (*TimePerFile, error){
 	defer f.Close()
 
 	reader := bufio.NewReader(f)
+	res := make([]*TimeInfo, 0)
 	//lineNum := 0
 	for {
 		line, _, err := reader.ReadLine()
@@ -32,11 +29,8 @@ func TimeFromFile(parser *Parser, filePath string) (*TimePerFile, error){
 		}
 		info := parser.ParseLineForTime(string(line))
 		if info != nil {
-			for k, v := range info {
-				fmt.Printf("%s: %s\n", k, v)
-			}
-			fmt.Printf("\n")
+			res = append(res, info)
 		}
 	}
-	return nil, nil
+	return res, nil
 }
