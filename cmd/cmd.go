@@ -39,6 +39,21 @@ func Run() error {
 		return statistic(*statisticInputDir, *statisticOutputDir, *statisticMaintainName)
 	}
 
+	// For time infos
+	timeCmd := appCmd.Command("time", "Extract the receiving time info from log files.")
+	timeInputDir := timeCmd.Arg("input", "Input directory or file. " +
+		"Format file name as \"uniqueId_index.extension\" to distinguish log from different peers.").Required().String()
+	timeOutputDir := timeCmd.Arg("output", "Output directory for result. A new directory would be created if not exists.").Required().String()
+	cmds[timeCmd.FullCommand()] = func () error {
+		return time(*timeInputDir, *timeOutputDir)
+	}
+
+	versionCmd := appCmd.Command("version", "Version of hon-logparser.")
+	cmds[versionCmd.FullCommand()] = func () error {
+		fmt.Printf("Version: %s\n", utils.Version)
+		return nil
+	}
+
 	// commands
 	cmd := kingpin.MustParse(appCmd.Parse(os.Args[1:]))
 	for key, value := range cmds {

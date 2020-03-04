@@ -87,9 +87,18 @@ func (s *Statistic) SaveToDisk(outDir string) error {
 	return nil
 }
 
+// MergeTwoStatistics merges two statistics into one.
+// Note that the new statistic will keep their PeerId if two statistics have the same PeerId.
+// Otherwise its PeerId would be "ALL".
 func MergeTwoStatistics(s1 *Statistic, s2 *Statistic) *Statistic {
+	var tmpPeerId string
+	if s1.PeerId == s2.PeerId {
+		tmpPeerId = s1.PeerId
+	} else {
+		tmpPeerId = "ALL"
+	}
 	return &Statistic{
-		PeerId:	  "ALL",
+		PeerId:	  tmpPeerId,
 		NumBlockSend: s1.NumBlockSend + s2.NumBlockSend,
 		NumBlockRecv: s1.NumBlockRecv + s2.NumBlockRecv,
 		NumDupBlock: s1.NumDupBlock + s2.NumDupBlock,

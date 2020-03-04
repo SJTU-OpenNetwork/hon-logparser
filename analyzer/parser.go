@@ -47,10 +47,7 @@ func parseTimestamp(str string) (time.Time, error){
 }
 
 func (parser *Parser) ParseLineWithFilter(line string, filter map[string]interface{}) (*Event, error) {
-	//fmt.Printf("extractBasic\n")
 	info, err := parser.extractBasic(line)
-	//fmt.Printf(filter)
-	//fmt.Printf("basic extracted\n")
 	if err != nil{
 		return nil, err
 	}
@@ -58,7 +55,6 @@ func (parser *Parser) ParseLineWithFilter(line string, filter map[string]interfa
 		return nil, nil
 	}
 
-	//fmt.Printf("Check filter\n")
 	_, ok := filter[info["event"]]
 	if !ok {
 		//fmt.Printf("No such filter\n")
@@ -90,6 +86,27 @@ func (parser *Parser) ParseLine(line string) (*Event, error){
 	}
 
 	return event, nil
+}
+
+func (parser *Parser) ParseLineForTime(line string) map[string]string {
+	// var timeExpr = `([\d -\.:]{26}) ([A-Z]*) ([a-z-_\.]*) ([a-z-_:\.0-9A-Z]*)
+	// =====pic_cid:([\w]*) millis:([0-9]*) bytes:([0-9]*) bytePerMills:([0-9]*).*`
+	params := parser.timeReg.FindStringSubmatch(line)
+	if len(params) > 6 {
+		return map[string] string{
+			"origin": params[0],
+			"time": params[1],
+			"type": params[2],
+			"system": params[3],
+			"location": params[4],
+			"cid": params[5],
+			"ms": params[6],
+			"bytes": params[7],
+			"bytePerMs": params[8],
+		}
+	} else {
+		return nil		// Do not raise error. As it is common the line mismatches basicReg.
+	}
 }
 
 /**

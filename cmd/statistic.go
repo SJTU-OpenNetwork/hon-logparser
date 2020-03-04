@@ -93,7 +93,6 @@ func statistic(filePath string, outDir string, maintain bool) error {
 
 func statisticFile(filePath string) (*analyzer.Statistic, error) {
 	// parse the whole file
-	//
 	parser, err := analyzer.NewParser(); if err != nil {return nil, err}
 	statistics, err := analyzer.CountForFile(parser, filePath)
 	return statistics, nil
