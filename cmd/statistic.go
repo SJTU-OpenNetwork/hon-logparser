@@ -19,7 +19,14 @@ func statistic(filePath string, outDir string, maintain bool) error {
 		return err
 	}
 	fstat, err := os.Stat(filePath); if err != nil {return err}
+
 	if fstat.IsDir() {
+		allStatistic := &analyzer.Statistic{
+			PeerId: "ALL",
+			NumBlockSend: 0,
+			NumBlockRecv: 0,
+			NumDupBlock: 0,
+		}
 		fmt.Printf("List all log files in %s\n", filePath)
 		fileMap := utils.ListLogFiles(filePath, make(map[string][]string))
 		for _, v := range fileMap {
@@ -28,6 +35,8 @@ func statistic(filePath string, outDir string, maintain bool) error {
 				if err != nil {
 					return err
 				}
+				allStatistic := analyzer.MergeTwoStatistics(allStatistic, sta)
+				// Save statistic file
 				if maintain {
 					savePath, err := getStatisticFilePath(outDir, f)
 					if err != nil {
@@ -44,6 +53,11 @@ func statistic(filePath string, outDir string, maintain bool) error {
 						return err
 					}
 				}
+				err = allStatistic.SaveToDiskFile(path.Join(outDir, "ALL.json"))
+				if err != nil {
+					return err
+				}
+				// End save
 			}
 		}
 
@@ -52,6 +66,7 @@ func statistic(filePath string, outDir string, maintain bool) error {
 		if err != nil {
 			return err
 		}
+		// Save statistic file
 		if maintain {
 			savePath, err := getStatisticFilePath(outDir, filePath)
 			if err != nil {
@@ -68,14 +83,9 @@ func statistic(filePath string, outDir string, maintain bool) error {
 				return err
 			}
 		}
+		// End save
 	}
-	//	var recorder *Recorder
-	//	if fordir.IsDir(){
-	//		recorder = parseRecursiveDir(*input)
-	//	} else {
-	//		//recorder.SaveCounter(path.Join(*output, "counters", recorder.selfPeer+ ".json"))
-	//		recorder = parseFile(*input)
-	//	}
+
 	return nil
 }
 

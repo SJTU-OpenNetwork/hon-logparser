@@ -87,3 +87,12 @@ func (s *Statistic) SaveToDisk(outDir string) error {
 	return nil
 }
 
+func MergeTwoStatistics(s1 *Statistic, s2 *Statistic) *Statistic {
+	return &Statistic{
+		PeerId:	  "ALL",
+		NumBlockSend: s1.NumBlockSend + s2.NumBlockSend,
+		NumBlockRecv: s1.NumBlockRecv + s2.NumBlockRecv,
+		NumDupBlock: s1.NumDupBlock + s2.NumDupBlock,
+	}
+}
+
