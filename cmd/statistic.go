@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"github.com/SJTU-OpenNetwork/hon-logparser/analyzer"
 	"github.com/SJTU-OpenNetwork/hon-logparser/utils"
+	"path"
+	"strings"
 
 	//"io/ioutil"
 	"os"
 	//"path"
 )
 
-func statistic(filePath string, outDir string) error {
+func statistic(filePath string, outDir string, maintain bool) error {
 	fmt.Printf("Make directory for %s", outDir)
 	err := os.MkdirAll(outDir, os.ModePerm)
 	if err != nil {
@@ -18,24 +20,31 @@ func statistic(filePath string, outDir string) error {
 	}
 	fstat, err := os.Stat(filePath); if err != nil {return err}
 	if fstat.IsDir() {
-		//fmt.Printf("Unimplement\n")
-		//files, err := ioutil.ReadDir(filePath)
 		fmt.Printf("List all log files in %s\n", filePath)
 		fileMap := utils.ListLogFiles(filePath, make(map[string][]string))
 		for _, v := range fileMap {
-			//fmt.Printf("%s:", k)
 			for _, f := range v {
-				//fmt.Printf(f)
 				sta, err := statisticFile(f)
 				if err != nil {
 					return err
 				}
-				err = sta.SaveToDisk(outDir)
-				if err != nil {
-					return err
+				if maintain {
+					savePath, err := getStatisticFilePath(outDir, f)
+					if err != nil {
+						return err
+					}
+					err = sta.SaveToDiskFile(savePath)
+					if err != nil {
+						return err
+					}
+				}else
+				{
+					err = sta.SaveToDisk(outDir)
+					if err != nil {
+						return err
+					}
 				}
 			}
-			//fmt.Printf("\n")
 		}
 
 	} else {
@@ -43,9 +52,21 @@ func statistic(filePath string, outDir string) error {
 		if err != nil {
 			return err
 		}
-		err = sta.SaveToDisk(outDir)
-		if err != nil {
-			return err
+		if maintain {
+			savePath, err := getStatisticFilePath(outDir, filePath)
+			if err != nil {
+				return err
+			}
+			err = sta.SaveToDiskFile(savePath)
+			if err != nil {
+				return err
+			}
+		} else
+		{
+			err = sta.SaveToDisk(outDir)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	//	var recorder *Recorder
@@ -66,4 +87,13 @@ func statisticFile(filePath string) (*analyzer.Statistic, error) {
 	parser, err := analyzer.NewParser(); if err != nil {return nil, err}
 	statistics, err := analyzer.CountForFile(parser, filePath)
 	return statistics, nil
+}
+
+// Get the file path to save statistic file.
+// This is useful when you want maintain the file name of log file as the file name of statistic file.
+func getStatisticFilePath(outDir string, logPath string) (string, error) {
+	_, logFile := path.Split(logPath)
+	logFileName := strings.Split(logFile, ".")[0]
+	//logFileBaseName := strings.Split(logFileName)
+	return path.Join(outDir, logFileName + ".json"), nil
 }

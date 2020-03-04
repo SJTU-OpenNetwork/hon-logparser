@@ -53,7 +53,24 @@ func CountForFile(parser *Parser, filePath string) (*Statistic, error){
 	return result, nil
 }
 
-func (s *Statistic)SaveToDisk(outDir string) error {
+// SaveToDiskFile would save statistic object as an json file with path outPath.
+func (s *Statistic) SaveToDiskFile(outPath string) error {
+	outMap := map[string]interface{}{
+		"PeerId": s.PeerId,
+		"NumBlockSend": s.NumBlockSend,
+		"NumBlockRecv":s.NumBlockRecv,
+		"NumDupBlock": s.NumDupBlock,
+	}
+	js := utils.Map2json(outMap)
+	_, err := utils.WriteBytes(outPath, []byte(js))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// SaveToDisk would save statistic object as an json file with path outDir/s.PeerId.json
+func (s *Statistic) SaveToDisk(outDir string) error {
 	ok, err := utils.PathExists(outDir)
 	if err != nil {
 		return err
@@ -63,14 +80,7 @@ func (s *Statistic)SaveToDisk(outDir string) error {
 	}
 
 	filePath := path.Join(outDir, s.PeerId + ".json")
-	outMap := map[string]interface{}{
-		"PeerId": s.PeerId,
-		"NumBlockSend": s.NumBlockSend,
-		"NumBlockRecv":s.NumBlockRecv,
-		"NumDupBlock": s.NumDupBlock,
-	}
-	js := utils.Map2json(outMap)
-	_, err = utils.WriteBytes(filePath, []byte(js))
+	err = s.SaveToDiskFile(filePath)
 	if err != nil {
 		return err
 	}

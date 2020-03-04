@@ -33,8 +33,10 @@ func Run() error {
 	statisticInputDir := statisticCmd.Arg("input", "Input directory or file. " +
 		"Format file name as \"uniqueId_index.extension\" to distinguish log from different peers.").Required().String()
 	statisticOutputDir := statisticCmd.Arg("output", "Output directory for result. A new directory would be created if not exists.").Required().String()
+	statisticMaintainName := statisticCmd.Flag("maintain", "Whether to maintain the input file to output file name." +
+		"This is pretty usefull when you use file name to distinguish different kinds of log file.").Bool()
 	cmds[statisticCmd.FullCommand()] = func() error {
-		return statistic(*statisticInputDir, *statisticOutputDir)
+		return statistic(*statisticInputDir, *statisticOutputDir, *statisticMaintainName)
 	}
 
 	// commands

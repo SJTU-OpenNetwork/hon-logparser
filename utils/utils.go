@@ -116,3 +116,5 @@ func ListLogFiles(dirPath string, fileMap map[string][]string) map[string][]stri
 
 	return fileMap
 }
+
+//func
