@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const Version = "1.0.0"
+const Version = "1.1.0"
 
 /**
  * PathExists return true if the path exists.
@@ -118,4 +118,9 @@ func ListLogFiles(dirPath string, fileMap map[string][]string) map[string][]stri
 	return fileMap
 }
 
-//func
+// Input: /root/xxx/abcd_1.log
+// Output: abcd
+func GetLogName(filePath string) string{
+	_, fileName := path.Split(filePath)
+	return strings.Split(fileName, ".")[0]
+}

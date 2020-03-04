@@ -95,7 +95,7 @@ func (parser *Parser) ParseLineForTime(line string) *TimeInfo {
 	// =====pic_cid:([\w]*) millis:([0-9]*) bytes:([0-9]*) bytePerMills:([0-9]*).*`
 	params := parser.timeReg.FindStringSubmatch(line)
 	if len(params) > 6 {
-		res := &TimeInfo{}
+		res := &TimeInfo{PeerId: ""}
 		res.Cid = params[5]
 		res.Ms, _ = strconv.Atoi(params[6])
 		res.Bytes, _ = strconv.Atoi(params[7])
@@ -117,24 +117,7 @@ func (parser *Parser) ParseLineForTime(line string) *TimeInfo {
 	}
 }
 
-// TimeInfo contains basic info extract from one line in log file
-// It may be useless to define a specific struct for it if we only use the time info as is.
-// But it would be helpful if we want to do further analysing about time info.
-type TimeInfo struct {
-	Cid string
-	Ms int
-	Bytes int
-	BytePerMs int
-}
 
-func (ti *TimeInfo) PrintOut(){
-	js, err := json.Marshal(ti)
-	if err != nil {
-		fmt.Printf("%s\n", err.Error())
-	} else {
-		fmt.Printf("%s\n", string(js))
-	}
-}
 
 /**
  * extractBasic parse a line according to basicReg
