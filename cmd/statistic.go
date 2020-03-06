@@ -16,6 +16,7 @@ func statistic(filePath string, outDir string, maintain bool, cidFilterPath stri
 	parser, err := analyzer.NewParser(); if err != nil {return err}
 	if cidFilterPath != "" {
 		cidFilter, err := utils.CidFilterFromFile(cidFilterPath); if err != nil {return err}
+		cidFilter.PrintOut()
 		parser.SetCidFilter(cidFilter)
 	}
 

@@ -174,9 +174,9 @@ func (parser *Parser)extractInfo(info map[string]string) (*Event, error) {
 	switch info["event"]{
 	case "MSGRECV":
 		// [MSGRECV] From <peerid>
-		if parser.cidFilter != nil && !parser.cidFilter.Has(params[1]){
-			return nil, nil
-		}
+		//if parser.cidFilter != nil && !parser.cidFilter.Has(params[1]){
+		//	return nil, nil
+		//}
 		return &Event{
 			Type: info["event"],
 			Time: tmpTime,

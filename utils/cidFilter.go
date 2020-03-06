@@ -68,3 +68,9 @@ func (filter *CidFilter) Add(cid string) {
 		filter.data[cid] = struct{}{}
 	}
 }
+
+func (filter *CidFilter) PrintOut() {
+	for k, _:= range filter.data {
+		fmt.Printf("%s\n", k)
+	}
+}
