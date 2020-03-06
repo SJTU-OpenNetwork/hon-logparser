@@ -37,7 +37,7 @@ func statistic(filePath string, outDir string, maintain bool, cidFilterPath stri
 		fileMap := utils.ListLogFiles(filePath, make(map[string][]string))
 		for _, v := range fileMap {
 			for _, f := range v {
-				sta, err := analyzer.CountForFile(parser, filePath); if err != nil {return err}
+				sta, err := analyzer.CountForFile(parser, f); if err != nil {return err}
 
 				allStatistic := analyzer.MergeTwoStatistics(allStatistic, sta)
 				// Save statistic file
