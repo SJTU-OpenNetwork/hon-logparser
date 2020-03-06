@@ -14,6 +14,15 @@ type Statistic struct {
 	NumDupBlock int
 }
 
+func NewEmpryStatistic(peerId string) *Statistic {
+	return &Statistic{
+		PeerId:       peerId,
+		NumBlockSend: 0,
+		NumBlockRecv: 0,
+		NumDupBlock:  0,
+	}
+}
+
 func CountForFile(parser *Parser, filePath string) (*Statistic, error){
 	if parser == nil {
 		fmt.Printf("Nil parser !!!!!!\n")
@@ -93,6 +102,10 @@ func (s *Statistic) SaveToDisk(outDir string) error {
 func MergeTwoStatistics(s1 *Statistic, s2 *Statistic) *Statistic {
 	var tmpPeerId string
 	if s1.PeerId == s2.PeerId {
+		tmpPeerId = s1.PeerId
+	} else if s1.PeerId == "" {
+		tmpPeerId = s2.PeerId
+	} else if s2.PeerId == ""{
 		tmpPeerId = s1.PeerId
 	} else {
 		tmpPeerId = "ALL"

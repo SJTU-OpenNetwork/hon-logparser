@@ -28,43 +28,33 @@ func statistic(filePath string, outDir string, maintain bool, cidFilterPath stri
 	fstat, err := os.Stat(filePath); if err != nil {return err}
 
 	if fstat.IsDir() {
-		allStatistic := &analyzer.Statistic{
-			PeerId: "ALL",
-			NumBlockSend: 0,
-			NumBlockRecv: 0,
-			NumDupBlock: 0,
-		}
+		allStatistic := analyzer.NewEmpryStatistic("ALL")
 		fmt.Printf("List all log files in %s\n", filePath)
 		fileMap := utils.ListLogFiles(filePath, make(map[string][]string))
 		for _, v := range fileMap {
-			for _, f := range v {
-				sta, err := analyzer.CountForFile(parser, f); if err != nil {return err}
+			// For files of each peer
+			staForOnePeer :=  analyzer.NewEmpryStatistic("")
+			var savePath string
+			if len(v) > 0{
+				savePath, err = getStatisticFilePath(outDir, v[0]); if err != nil {return err}
+			}else{
+				continue
+			}
 
-				allStatistic := analyzer.MergeTwoStatistics(allStatistic, sta)
-				// Save statistic file
-				if maintain {
-					savePath, err := getStatisticFilePath(outDir, f)
-					if err != nil {
-						return err
-					}
-					err = sta.SaveToDiskFile(savePath)
-					if err != nil {
-						return err
-					}
-				}else
-				{
-					err = sta.SaveToDisk(outDir)
-					if err != nil {
-						return err
-					}
-				}
-				err = allStatistic.SaveToDiskFile(path.Join(outDir, "ALL.json"))
-				if err != nil {
-					return err
-				}
-				// End save
+			for _, f := range v {
+				// For each file
+				sta, err := analyzer.CountForFile(parser, f); if err != nil {return err}
+				allStatistic = analyzer.MergeTwoStatistics(allStatistic, sta)
+				staForOnePeer = analyzer.MergeTwoStatistics(staForOnePeer, sta)
+			}
+			// Save
+			if maintain {
+				err = staForOnePeer.SaveToDiskFile(savePath); if err != nil {return err	}
+			}else {
+				err = staForOnePeer.SaveToDisk(outDir);	if err != nil {	return err}
 			}
 		}
+		err = allStatistic.SaveToDiskFile(path.Join(outDir, "ALL.json")); if err != nil {return err	}
 
 	} else {
 		sta, err := analyzer.CountForFile(parser, filePath); if err != nil {return err}
