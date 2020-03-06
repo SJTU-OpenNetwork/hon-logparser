@@ -60,6 +60,9 @@ func (filter *CidFilter) ToFile(filePath string) error {
 
 func (filter *CidFilter) Has(cid string) bool {
 	_, ok := filter.data[cid]
+	if ok {
+		fmt.Printf("Has %s\n", cid)
+	}
 	return ok
 }
 
