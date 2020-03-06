@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const Version = "1.1.0"
+const Version = "1.2.0"
 
 /**
  * PathExists return true if the path exists.

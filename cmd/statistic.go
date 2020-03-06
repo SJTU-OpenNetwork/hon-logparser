@@ -13,14 +13,14 @@ import (
 )
 
 func statistic(filePath string, outDir string, maintain bool, cidFilterPath string) error {
-	if cidFilterPath == "" {
-		fmt.Printf("cidFilter is empty\n")
-	} else {
-		fmt.Printf("cidFilter %s", cidFilterPath)
+	parser, err := analyzer.NewParser(); if err != nil {return err}
+	if cidFilterPath != "" {
+		cidFilter, err := utils.CidFilterFromFile(cidFilterPath); if err != nil {return err}
+		parser.SetCidFilter(cidFilter)
 	}
 
 	fmt.Printf("Make directory for %s", outDir)
-	err := os.MkdirAll(outDir, os.ModePerm)
+	err = os.MkdirAll(outDir, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -37,10 +37,8 @@ func statistic(filePath string, outDir string, maintain bool, cidFilterPath stri
 		fileMap := utils.ListLogFiles(filePath, make(map[string][]string))
 		for _, v := range fileMap {
 			for _, f := range v {
-				sta, err := statisticFile(f)
-				if err != nil {
-					return err
-				}
+				sta, err := analyzer.CountForFile(parser, filePath); if err != nil {return err}
+
 				allStatistic := analyzer.MergeTwoStatistics(allStatistic, sta)
 				// Save statistic file
 				if maintain {
@@ -68,10 +66,7 @@ func statistic(filePath string, outDir string, maintain bool, cidFilterPath stri
 		}
 
 	} else {
-		sta, err := statisticFile(filePath)
-		if err != nil {
-			return err
-		}
+		sta, err := analyzer.CountForFile(parser, filePath); if err != nil {return err}
 		// Save statistic file
 		if maintain {
 			savePath, err := getStatisticFilePath(outDir, filePath)
@@ -93,15 +88,6 @@ func statistic(filePath string, outDir string, maintain bool, cidFilterPath stri
 	}
 
 	return nil
-}
-
-
-
-func statisticFile(filePath string) (*analyzer.Statistic, error) {
-	// parse the whole file
-	parser, err := analyzer.NewParser(); if err != nil {return nil, err}
-	statistics, err := analyzer.CountForFile(parser, filePath)
-	return statistics, nil
 }
 
 // Get the file path to save statistic file.
