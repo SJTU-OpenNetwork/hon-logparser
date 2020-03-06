@@ -62,6 +62,8 @@ func (filter *CidFilter) Has(cid string) bool {
 	_, ok := filter.data[cid]
 	if ok {
 		fmt.Printf("Has %s\n", cid)
+	} else {
+		fmt.Printf("Not has %s\n", cid)
 	}
 	return ok
 }
