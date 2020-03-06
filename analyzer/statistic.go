@@ -118,3 +118,35 @@ func MergeTwoStatistics(s1 *Statistic, s2 *Statistic) *Statistic {
 	}
 }
 
+/**
+ * StatisticStore is used to manage statistics from different peers.
+ * One peer may have multi log files. StatisticStore can merge the statistic result from the same peer to one statistic result.
+ */
+type StatisticStore struct {
+	data map[string]*Statistic
+}
+
+func NewStatisticStore() *StatisticStore{
+	return &StatisticStore{data:make(map[string]*Statistic)}
+}
+
+// Note that if statistic contains no peerId info, it would be named as Unknown
+func (store *StatisticStore) Add(statistic *Statistic) {
+	if statistic.PeerId == "" {
+		fmt.Printf("Unknown peerId\n")
+		statistic.PeerId = "Unknown"
+	}
+	_, ok := store.data[statistic.PeerId]
+	if !ok {
+		store.data[statistic.PeerId] = statistic
+	} else {
+		store.data[statistic.PeerId] = MergeTwoStatistics(store.data[statistic.PeerId], statistic)
+	}
+}
+
+func (store *StatisticStore) SaveToDisk(outDir string) error {
+	for _, sta := range store.data{
+		err := sta.SaveToDisk(outDir); if err != nil {return err}
+	}
+}
+

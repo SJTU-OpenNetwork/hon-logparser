@@ -12,7 +12,7 @@ import (
 	//"path"
 )
 
-func statistic(filePath string, outDir string, maintain bool, cidFilterPath string) error {
+func statistic(filePath string, outDir, cidFilterPath string) error {
 	parser, err := analyzer.NewParser(); if err != nil {return err}
 	if cidFilterPath != "" {
 		cidFilter, err := utils.CidFilterFromFile(cidFilterPath); if err != nil {return err}
@@ -29,52 +29,57 @@ func statistic(filePath string, outDir string, maintain bool, cidFilterPath stri
 
 	if fstat.IsDir() {
 		allStatistic := analyzer.NewEmpryStatistic("ALL")
+		statisticStore := analyzer.NewStatisticStore()
 		fmt.Printf("List all log files in %s\n", filePath)
 		fileMap := utils.ListLogFiles(filePath, make(map[string][]string))
 		for _, v := range fileMap {
 			// For files of each peer
-			staForOnePeer :=  analyzer.NewEmpryStatistic("")
-			var savePath string
-			if len(v) > 0{
-				savePath, err = getStatisticFilePath(outDir, v[0]); if err != nil {return err}
-			}else{
-				continue
-			}
+			//staForOnePeer :=  analyzer.NewEmpryStatistic("")
+			//var savePath string
+			//if len(v) > 0{
+			//	savePath, err = getStatisticFilePath(outDir, v[0]); if err != nil {return err}
+			//}else{
+			//	continue
+			//}
 
 			for _, f := range v {
 				// For each file
 				sta, err := analyzer.CountForFile(parser, f); if err != nil {return err}
+				statisticStore.Add(sta)
 				allStatistic = analyzer.MergeTwoStatistics(allStatistic, sta)
-				staForOnePeer = analyzer.MergeTwoStatistics(staForOnePeer, sta)
+				//staForOnePeer = analyzer.MergeTwoStatistics(staForOnePeer, sta)
 			}
 			// Save
-			if maintain {
-				err = staForOnePeer.SaveToDiskFile(savePath); if err != nil {return err	}
-			}else {
-				err = staForOnePeer.SaveToDisk(outDir);	if err != nil {	return err}
-			}
+			//if maintain {
+			//	err = staForOnePeer.SaveToDiskFile(savePath); if err != nil {return err	}
+			//}else {
+			//	err = staForOnePeer.SaveToDisk(outDir);	if err != nil {	return err}
+			//}
+
 		}
+		err = statisticStore.SaveToDisk(outDir); if err != nil {return err}
 		err = allStatistic.SaveToDiskFile(path.Join(outDir, "ALL.json")); if err != nil {return err	}
 
 	} else {
 		sta, err := analyzer.CountForFile(parser, filePath); if err != nil {return err}
 		// Save statistic file
-		if maintain {
-			savePath, err := getStatisticFilePath(outDir, filePath)
-			if err != nil {
-				return err
-			}
-			err = sta.SaveToDiskFile(savePath)
-			if err != nil {
-				return err
-			}
-		} else
-		{
-			err = sta.SaveToDisk(outDir)
-			if err != nil {
-				return err
-			}
-		}
+		//if maintain {
+		//	savePath, err := getStatisticFilePath(outDir, filePath)
+		//	if err != nil {
+		//		return err
+		//	}
+		//	err = sta.SaveToDiskFile(savePath)
+		//	if err != nil {
+		//		return err
+		//	}
+		//} else
+		//{
+		//	err = sta.SaveToDisk(outDir)
+		//	if err != nil {
+		//		return err
+		//	}
+		//}
+		err = sta.SaveToDisk(outDir); if err != nil {return err}
 		// End save
 	}
 
