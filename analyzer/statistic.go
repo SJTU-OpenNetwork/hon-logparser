@@ -148,5 +148,6 @@ func (store *StatisticStore) SaveToDisk(outDir string) error {
 	for _, sta := range store.data{
 		err := sta.SaveToDisk(outDir); if err != nil {return err}
 	}
+	return nil
 }
 
