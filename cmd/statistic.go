@@ -12,7 +12,13 @@ import (
 	//"path"
 )
 
-func statistic(filePath string, outDir string, maintain bool) error {
+func statistic(filePath string, outDir string, maintain bool, cidFilterPath string) error {
+	if cidFilterPath == "" {
+		fmt.Printf("cidFilter is empty\n")
+	} else {
+		fmt.Printf("cidFilter %s", cidFilterPath)
+	}
+
 	fmt.Printf("Make directory for %s", outDir)
 	err := os.MkdirAll(outDir, os.ModePerm)
 	if err != nil {
@@ -106,3 +112,4 @@ func getStatisticFilePath(outDir string, logPath string) (string, error) {
 	//logFileBaseName := strings.Split(logFileName)
 	return path.Join(outDir, logFileName + ".json"), nil
 }
+

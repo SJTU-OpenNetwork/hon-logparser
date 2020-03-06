@@ -22,6 +22,7 @@ type Parser struct {
 	infoRegs  map[string]*regexp.Regexp
 	basicReg  *regexp.Regexp
 	timeReg   *regexp.Regexp
+	cidFilter *utils.CidFilter
 }
 
 func NewParser() (*Parser, error) {
@@ -36,7 +37,12 @@ func NewParser() (*Parser, error) {
 		infoRegs:infoRegs,
 		basicReg:basicReg,
 		timeReg:timeReg,
+		cidFilter:nil,
 	}, nil
+}
+
+func (parser *Parser) SetCidFilter(filter *utils.CidFilter) {
+	parser.cidFilter = filter
 }
 
 func parseTimestamp(str string) (time.Time, error){
@@ -155,7 +161,8 @@ func (parser *Parser) parseInfo(event string, info string) ([]string, error) {
 	}
 }
 
-
+// Core function for parser.
+// Note that this func may return nil, nil
 func (parser *Parser)extractInfo(info map[string]string) (*Event, error) {
 
 	tmpTime, _ := parseTimestamp(info["time"])
@@ -167,6 +174,9 @@ func (parser *Parser)extractInfo(info map[string]string) (*Event, error) {
 	switch info["event"]{
 	case "MSGRECV":
 		// [MSGRECV] From <peerid>
+		if parser.cidFilter != nil && !parser.cidFilter.Has(params[1]){
+			return nil, nil
+		}
 		return &Event{
 			Type: info["event"],
 			Time: tmpTime,
@@ -181,6 +191,9 @@ func (parser *Parser)extractInfo(info map[string]string) (*Event, error) {
 		// [BLKRECV] Cid <cid>, From <peerid>
 		// [BLKCANCEL] Cid <cid>, From <peerid>
 		// [WANTRECV] Cid <cid>, From <peerid>
+		if parser.cidFilter != nil && !parser.cidFilter.Has(params[1]){
+			return nil, nil
+		}
 		return &Event{
 			Type: info["event"],
 			Time: tmpTime,
@@ -195,6 +208,9 @@ func (parser *Parser)extractInfo(info map[string]string) (*Event, error) {
 	case "BLKSEND", "WANTSEND":
 		// [BLKSEND] Cid <cid>, SendTo <peerid>
 		// [WANTSEND] Cid <cid>, SendTo <peerid>
+		if parser.cidFilter != nil && !parser.cidFilter.Has(params[1]){
+			return nil, nil
+		}
 		return &Event{
 			Type: info["event"],
 			Time: tmpTime,
@@ -208,6 +224,9 @@ func (parser *Parser)extractInfo(info map[string]string) (*Event, error) {
 		},nil
 	case "TKTSEND":
 		// [TKTSEND] Cid <cid>, SendTo <peerid>, TimeStamp <time>
+		if parser.cidFilter != nil && !parser.cidFilter.Has(params[1]){
+			return nil, nil
+		}
 		return &Event{
 			Type: info["event"],
 			Time: tmpTime,
@@ -222,6 +241,9 @@ func (parser *Parser)extractInfo(info map[string]string) (*Event, error) {
 		},nil
 	case "ACKSEND":
 		// [ACKSEND] Cid <cid>, Publisher <peerid>, Receiver <peerid>
+		if parser.cidFilter != nil && !parser.cidFilter.Has(params[1]){
+			return nil, nil
+		}
 		return &Event{
 			Type: info["event"],
 			Time: tmpTime,
@@ -236,6 +258,9 @@ func (parser *Parser)extractInfo(info map[string]string) (*Event, error) {
 		}, nil
 	case "TKTRECV":
 		// [TKTRECV] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
+		if parser.cidFilter != nil && !parser.cidFilter.Has(params[1]){
+			return nil, nil
+		}
 		return &Event{
 			Type: info["event"],
 			Time: tmpTime,
@@ -252,6 +277,9 @@ func (parser *Parser)extractInfo(info map[string]string) (*Event, error) {
 	case "TKTREJECT", "TKTACCEPT":
 		// [TKTREJECT] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
 		// [TKTACCEPT] Cid <cid>, Publisher <peerid>, Receiver <peerid>, TimeStamp <time>
+		if parser.cidFilter != nil && !parser.cidFilter.Has(params[1]){
+			return nil, nil
+		}
 		return &Event{
 			Type: info["event"],
 			Time: tmpTime,
@@ -267,6 +295,9 @@ func (parser *Parser)extractInfo(info map[string]string) (*Event, error) {
 		}, nil
 	case "ACKRECV":
 		// [ACKRECV] Cid <cid>, Publisher <peerid>, Receiver <peerid>, Type <ACCEPT|CANCEL>
+		if parser.cidFilter != nil && !parser.cidFilter.Has(params[1]){
+			return nil, nil
+		}
 		return &Event{
 			Type: info["event"],
 			Time: tmpTime,

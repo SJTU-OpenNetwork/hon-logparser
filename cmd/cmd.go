@@ -35,8 +35,10 @@ func Run() error {
 	statisticOutputDir := statisticCmd.Arg("output", "Output directory for result. A new directory would be created if not exists.").Required().String()
 	statisticMaintainName := statisticCmd.Flag("maintain", "Whether to maintain the input file to output file name." +
 		"This is pretty usefull when you use file name to distinguish different kinds of log file.").Bool()
+	statisticCidFilter := statisticCmd.Flag("cidFilter", "File or directory path of cid filter. " +
+		"If given, logparser would only extract block information of cids within filter.").String()
 	cmds[statisticCmd.FullCommand()] = func() error {
-		return statistic(*statisticInputDir, *statisticOutputDir, *statisticMaintainName)
+		return statistic(*statisticInputDir, *statisticOutputDir, *statisticMaintainName, *statisticCidFilter)
 	}
 
 	// For time infos
