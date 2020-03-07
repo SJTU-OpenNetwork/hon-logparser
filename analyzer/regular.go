@@ -3,7 +3,7 @@ package analyzer
 /**
  * Define all the regular expression here.
  */
-
+import "github.com/SJTU-OpenNetwork/hon-textile/stream"
 
 var infoExprs = map[string]string {
 	"MSGRECV": `From ([\w]*).*`,
@@ -23,12 +23,12 @@ var infoExprs = map[string]string {
 
 	"ACKSEND"  : `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*).*`,
 	"ACKRECV"  : `Cid ([\w]*), Publisher ([\w]*), Receiver ([\w]*), Type ([A-Z]*).*`,
-	//stream.TAG_WORKERSTART : `Stream ([\w]*), To ([\w]*).*`,
-	//stream.TAG_WORKEREND : `Stream ([\w]*), To ([\w]*),*`,
-	//stream.TAG_BLOCKSEND = "BLOCKSEND"
-	//stream.TAG_BLOCKRECEIVE = "BLOCKRECV"
-	//stream.TAG_STREAMREQUEST = "STREAMREQUEST"
-	//stream.TAG_STREAMRESPONSE = "STREAMRESPONSE"
+	stream.TAG_WORKERSTART : `Stream ([\w]*), To ([\w]*).*`,
+	stream.TAG_WORKEREND : `Stream ([\w]*), To ([\w]*),*`,
+	stream.TAG_BLOCKSEND: `Block ([\w]*), Stream ([\w]*), Index ([0-9]*), To ([\w]*), Size ([0-9]*).*`,
+	stream.TAG_BLOCKRECEIVE : `Block ([\w]*), Stream ([\w]*), From ([\w]*), Size ([0-9]*).*`,
+	stream.TAG_STREAMREQUEST : `Stream ([\w]*), To ([\w]*).*`,
+	stream.TAG_STREAMRESPONSE : `Stream ([\w]*), From ([\w]*).*`,
 }
 
 // basicExpr is used to
