@@ -44,6 +44,17 @@ func CidFilterFromFile(filePath string) (*CidFilter, error){
 	return res, nil
 }
 
+func MergeTwoCidFilter(f1 *CidFilter, f2 *CidFilter) *CidFilter {
+	f3 := &CidFilter{make(map[string]interface{})}
+	for k,v := range f1.data {
+		f3.data[k] = v
+	}
+	for k, v := range f2.data {
+		f3.data[k] = v
+	}
+	return f3
+}
+
 func (filter *CidFilter) ToFile(filePath string) error {
 
 	fo, err := os.Create(filePath); if err != nil {return err}
@@ -61,9 +72,9 @@ func (filter *CidFilter) ToFile(filePath string) error {
 func (filter *CidFilter) Has(cid string) bool {
 	_, ok := filter.data[cid]
 	if ok {
-		fmt.Printf("Has %s\n", cid)
+		//fmt.Printf("Has %s\n", cid)
 	} else {
-		fmt.Printf("Not has %s\n", cid)
+		//fmt.Printf("Not has %s\n", cid)
 	}
 	return ok
 }

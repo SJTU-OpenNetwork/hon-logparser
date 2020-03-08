@@ -7,6 +7,12 @@ import (
 	"path"
 )
 
+func TestStreamMapOutput() error {
+	fmt.Printf("Test how to output streamMap")
+	//
+	return nil
+}
+
 func TestJson(outDir string) error {
 	fmt.Printf("Test to load and write json file to %s\n", outDir)
 	testMap := make(map[string]interface{})

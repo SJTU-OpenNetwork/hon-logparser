@@ -5,9 +5,11 @@ import (
 	"container/list"
 	"encoding/json"
 	"fmt"
+	"github.com/SJTU-OpenNetwork/hon-logparser/utils"
 	"io"
 	"os"
 	"time"
+	"github.com/SJTU-OpenNetwork/hon-textile/stream"
 )
 
 /**
@@ -206,6 +208,20 @@ func (r *Recorder) SetEventsPeer() bool {
 	}
 }
 
+func (r *Recorder) GetCidFilter() *utils.CidFilter {
+	filter := &utils.CidFilter{make(map[string]interface{})}
+	for e := r.eventList.Front(); e != nil; e = e.Next() {
+		event := e.Value.(*Event)
+		switch event.Type {
+		case stream.TAG_BLOCKSEND:
+			filter.Add(event.Info["Cid"].(string))
+		case stream.TAG_BLOCKRECEIVE:
+			filter.Add(event.Info["Cid"].(string))
+		}
+	}
+	return filter
+}
+
 func MergeRecorders(rs []*Recorder) *Recorder{
 	rch := make(chan *Recorder, len(rs))
 	//resultChan := make(chan *Recorder)	//channel used to hold output
@@ -259,6 +275,7 @@ func mergeTwoRecorders(r1 *Recorder, r2 *Recorder) *Recorder {
 	}
 	return result
 }
+
 
 type Counter interface{
 	Count(*Event)

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	//"github.com/SJTU-OpenNetwork/hon-textile/stream"
+	"github.com/SJTU-OpenNetwork/hon-textile/stream"
 )
 
 const TimeFotmat = "2006-01-02 15:04:05.000000"
@@ -311,6 +311,46 @@ func (parser *Parser)extractInfo(info map[string]string) (*Event, error) {
 				"Type" : params[4],
 			},
 		}, nil
+	case stream.TAG_BLOCKSEND:
+		//`Block ([\w]*), Stream ([\w]*), Index ([0-9]*), To ([\w]*), Size ([0-9]*).*`,
+		if parser.cidFilter != nil && !parser.cidFilter.Has(params[1]){
+			return nil, nil
+		}
+		return &Event{
+			Type: info["event"],
+			Time: tmpTime,
+			Direction:[]string{
+				SELF, params[4],
+			},
+			Info: map[string]interface{}{
+				"Cid": params[1],
+				"StreamId": params[2],
+				"Index": params[3],
+				"SendTo": params[4],
+				"Size": params[5],
+			},
+		}, nil
+
+	case stream.TAG_BLOCKRECEIVE:
+		// `Block ([\w]*), Stream ([\w]*), From ([\w]*), Size ([0-9]*).*`
+		if parser.cidFilter != nil && !parser.cidFilter.Has(params[1]){
+			return nil, nil
+		}
+		return &Event{
+			Type: info["event"],
+			Time: tmpTime,
+			Direction: []string{
+				params[3], SELF,
+			},
+			Info: map[string]interface{}{
+				"Cid": params[1],
+				"StreamId": params[2],
+				"From": params[3],
+				"Size": params[4],
+			},
+		}, nil
+	default:
+		//Do nothing
 	}
 
 	return nil, nil

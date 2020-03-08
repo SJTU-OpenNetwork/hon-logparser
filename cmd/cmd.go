@@ -50,6 +50,15 @@ func Run() error {
 		return time(*timeInputDir, *timeOutputDir)
 	}
 
+	// For stream analyze
+	streamCmd :=  appCmd.Command("stream", "Analyzer for stream protocol.")
+	streamCidRecordCmd := streamCmd.Command("recordCid", "Record block cids transferred by stream protocol.")
+	streamCidRecordInputDir := streamCidRecordCmd.Arg("input", "Input directory or file. ").Required().String()
+	streamCidRecordOutputDir := streamCidRecordCmd.Arg("output", "Output directory for result. A new directory would be created if not exists.").Required().String()
+	cmds[streamCidRecordCmd.FullCommand()] = func () error {
+		return streamCidRecord(*streamCidRecordInputDir, *streamCidRecordOutputDir)
+	}
+
 	versionCmd := appCmd.Command("version", "Version of hon-logparser.")
 	cmds[versionCmd.FullCommand()] = func () error {
 		fmt.Printf("Version: %s\n", utils.Version)
