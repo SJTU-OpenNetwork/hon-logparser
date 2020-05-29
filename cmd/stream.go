@@ -9,10 +9,9 @@ import (
 	"github.com/SJTU-OpenNetwork/hon-textile/stream"
 )
 
-func streamCmdRecord(filePath string, outDir string) error {
+func streamCidRecord(filePath string, outDir string) error {
 	parser, err := analyzer.NewParser(); if err != nil {return err}
-	res := &utils.CidFilter{make(map[string]interface{})}
-
+	res:= utils.EmptyCidFilter()
 	fmt.Printf("Make directory for %s", outDir)
 	err = os.MkdirAll(outDir, os.ModePerm)
 	if err != nil {

@@ -14,6 +14,10 @@ type CidFilter struct {
 	data map[string]interface{}
 }
 
+func EmptyCidFilter() *CidFilter {
+	return &CidFilter{data: make(map[string]interface{})}
+}
+
 // Generate a cid filter from file.
 // Format of file contains:
 //		pic_cid cid1 cid2 cid3 ....
