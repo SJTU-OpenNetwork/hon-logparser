@@ -1,15 +1,15 @@
-## Install
+## Build
 ```bash
 make
 ```
+An executable file <code>parser</code> would be generated at current directory.
 ## Usage
 
 ```bash
-./parser -i <input> -o <output>
+./parser --help
+./parser command --help
 ```
 
-- input: A directory contains several log files or a single log file
-- output: The directory used to save output csv file.
 
 ## TODO
 - [ ] Add command line parameter to set filters.
