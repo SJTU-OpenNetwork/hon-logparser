@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/SJTU-OpenNetwork/hon-logparser/utils"
+	"github.com/SJTU-OpenNetwork/hon-textile/stream"
 	"io"
 	"os"
 	"time"
-	"github.com/SJTU-OpenNetwork/hon-textile/stream"
 )
 
 /**
@@ -209,7 +209,8 @@ func (r *Recorder) SetEventsPeer() bool {
 }
 
 func (r *Recorder) GetCidFilter() *utils.CidFilter {
-	filter := &utils.CidFilter{make(map[string]interface{})}
+	//filter := &utils.CidFilter{make(map[string]interface{})}
+	filter := utils.EmptyCidFilter()
 	for e := r.eventList.Front(); e != nil; e = e.Next() {
 		event := e.Value.(*Event)
 		switch event.Type {
