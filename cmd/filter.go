@@ -34,7 +34,7 @@ func filter(input string, output string, reg string) error {
 				fmt.Println(err)
 				continue
 			}
-			outFile, err := os.Open(outPath)
+			outFile, err := os.Create(outPath)
 			if err != nil {
 				fmt.Println(err)
 				continue
