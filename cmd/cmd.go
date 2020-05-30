@@ -70,7 +70,7 @@ func Run() error {
 	filterOutput := filterCmd.Arg("output", "Output directory. A new directory would be created if no one exists").Required().String()
 	filterRegular := filterCmd.Arg("regular", "Regular expression usd for filter (Can be a simple substring)").Required().String()
 	cmds[filterCmd.FullCommand()] = func () error {
-		return
+		return filter(*filterInput, *filterOutput, *filterRegular)
 	}
 
 	// commands
