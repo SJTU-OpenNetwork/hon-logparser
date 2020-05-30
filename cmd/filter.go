@@ -48,4 +48,5 @@ func filter(input string, output string, reg string) error {
 			err = outFile.Close(); if err!= nil {fmt.Println(err)}
 		}
 	}
+	return nil
 }
