@@ -25,6 +25,23 @@ func PathExists(path string) (bool, error) {
 	return false, err
 }
 
+/**
+ * Check or create a directory.
+ * return:
+ * 		true: path is an existing directory or created successfully
+ * 		false: path is not a directory or created failed.
+ */
+func CheckOrCreateDir(path string) error {
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return os.MkdirAll(path, os.ModePerm)
+	} else if err != nil {
+		return err
+	} else {
+		return nil
+	}
+}
+
 
 func Map2json(info map[string]interface{}) string {
 	jsonString, err := json.MarshalIndent(info, "", "\t")

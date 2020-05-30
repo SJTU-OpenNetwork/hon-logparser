@@ -65,6 +65,14 @@ func Run() error {
 		return nil
 	}
 
+	filterCmd := appCmd.Command("filter", "Filter lines in input and output the matched lines to files in output directory")
+	filterInput := filterCmd.Arg("input", "Input directory or file.").Required().String()
+	filterOutput := filterCmd.Arg("output", "Output directory. A new directory would be created if no one exists").Required().String()
+	filterRegular := filterCmd.Arg("regular", "Regular expression usd for filter (Can be a simple substring)").Required().String()
+	cmds[filterCmd.FullCommand()] = func () error {
+		return
+	}
+
 	// commands
 	cmd := kingpin.MustParse(appCmd.Parse(os.Args[1:]))
 	for key, value := range cmds {
