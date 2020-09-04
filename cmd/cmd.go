@@ -3,6 +3,7 @@ package cmd
 import (
 	//"encoding/json"
 	"fmt"
+	"github.com/SJTU-OpenNetwork/hon-logparser/analyzer"
 	"github.com/SJTU-OpenNetwork/hon-logparser/utils"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
@@ -65,6 +66,7 @@ func Run() error {
 		return nil
 	}
 
+	// For regular expression filter.
 	filterCmd := appCmd.Command("filter", "Filter lines in input and output the matched lines to files in output directory")
 	filterInput := filterCmd.Arg("input", "Input directory or file.").Required().String()
 	filterOutput := filterCmd.Arg("output", "Output directory. A new directory would be created if no one exists").Required().String()
@@ -73,6 +75,32 @@ func Run() error {
 		return filter(*filterInput, *filterOutput, *filterRegular)
 	}
 
+	// For tree analyze
+	treeCmd := appCmd.Command("tree", "Analyzer the distribution tree for ticket based method.")
+	treeInput := treeCmd.Arg("input", "Input directory or file.").Required().String()
+	treeOutput := treeCmd.Arg("output", "Output directory.").Required().String()
+	cmds[treeCmd.FullCommand()] = func() error {
+		fordir, err := os.Stat(*treeInput)
+		if err != nil {
+			return err
+		}
+		var recorder *analyzer.Recorder
+		if fordir.IsDir() {
+			recorder = parseRecursiveDir(*treeInput)
+		} else {
+			//recorder.SaveCounter(path.Join(*output, "counters", recorder.selfPeer+ ".json"))
+			recorder = parseFile(*treeInput)
+		}
+
+
+		fmt.Println("Do Parse.")
+		CsvAnalyzer := analyzer.CreateCSVAnalyzer(*treeOutput, recorder,
+			[]string{"BLKRECV", "BLKCANCEL", "WANTRECV", "BLKSEND",
+				"WANTSEND", "TKTSEND", "ACKSEND", "TKTRECV", "TKTREJECT", "TKTACCEPT", "ACKRECV"})
+		CsvAnalyzer.AnalyzeAll()
+		CsvAnalyzer.AnalyzerRECVTree()
+		return nil
+	}
 	// commands
 	cmd := kingpin.MustParse(appCmd.Parse(os.Args[1:]))
 	for key, value := range cmds {

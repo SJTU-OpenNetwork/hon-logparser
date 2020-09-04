@@ -117,6 +117,10 @@ func (r *Recorder) AddMapCounter(){
 	}
 }
 
+func (r *Recorder) GetSelfId() string{
+	return r.selfPeer
+}
+
 func (r *Recorder) SetFilter(filter []string) {
 	r.eventFilter = filter
 }

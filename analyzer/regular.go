@@ -9,6 +9,7 @@ var infoExprs = map[string]string {
 	"MSGRECV": `From ([\w]*).*`,
 	"BLKRECV": `Cid ([\w]*), From ([\w]*).*`,
 	"BLKSEND": `Cid ([\w]*), SendTo ([\w]*).*`,
+	"BLKSENDED": `Cid ([\w]*), SendTo ([\w]*).*`,
 	"BLKCANCEL":`Cid ([\w]*), From ([\w]*).*`,
 	"WANTRECV" : `Cid ([\w]*), From ([\w]*).*`,
 	"WANTSEND" : `Cid ([\w]*), SendTo ([\w]*).*`,
@@ -37,4 +38,4 @@ var infoExprs = map[string]string {
 //		info can further match infoExprs
 var basicExpr = `([\d -\.:]{26}) ([A-Z]*) ([a-z-_\.]*) ([a-z-_:\.0-9A-Z]*) \[([A-Z]*)\] (.*)`
 var timeExpr = `([\d -\.:]{26}) ([A-Z]*) ([a-z-_\.]*) ([a-z-_:\.0-9A-Z]*) =====pic_cid:([\w]*) millis:([0-9]*) bytes:([0-9]*) bytePerMills:([0-9]*).*`
-var allEventType = []string{"MSGRECV", "BLKRECV", "BLKSEND", "BLKCANCEL", "WANTRECV", "WANTSEND", "TKTRECV", "TKTREJECT", "TKTACCEPT", "TKTSEND", "ACKSEND", "ACKRECV"}
+var allEventType = []string{"MSGRECV", "BLKRECV", "BLKSEND", "BLKCANCEL", "WANTRECV", "WANTSEND", "TKTRECV", "TKTREJECT", "TKTACCEPT", "TKTSEND", "ACKSEND", "ACKRECV", "BLKSENDED"}
